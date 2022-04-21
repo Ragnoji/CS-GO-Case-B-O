@@ -60,10 +60,14 @@ if __name__ == '__main__':
 
         driver.execute_script(f'Market_ShowBuyOrderPopup(730, "{new_box_name}", "{new_box_name}")')
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        price.send_keys(Keys.BACKSPACE*50, '1')
+        balance_element = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_walletbalance_amount"]').text
+        balance = int(balance_element.split('руб')[0].split(',')[0])
+        cost = 120  # рублей
+        quant = balance // cost
+        price.send_keys(Keys.BACKSPACE*50, f'{cost}')
         sleep(0.1)
         quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
-        quantity.send_keys(Keys.BACKSPACE*50,'2')
+        quantity.send_keys(Keys.BACKSPACE*50, f'{quant}')
         sleep(0.1)
         accept = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_accept_ssa"]')
         accept.click()
