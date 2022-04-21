@@ -18,8 +18,8 @@ def check_case_update(page=1):
         box_name = recent_post[0].replace('#038;', '')[4:]
         box_name = box_name[:box_name.find('Case') + 4]
         box_name = ' '.join(filter(lambda w: w[0].isupper() or w[0].isdigit() or w[0] == '&', box_name.split()))
-    if box_name.find('Operation') != -1:
-        box_name = False
+        if box_name.find('Operation') != -1:
+            box_name = False
     return box_name
 
 
