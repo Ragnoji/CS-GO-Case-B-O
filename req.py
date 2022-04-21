@@ -7,15 +7,20 @@ import vlc
 import pickle
 
 
-
 def check_case_update(page=1):
     response = requests.get(
         f'https://blog.counter-strike.net/index.php/category/updates/page/{page}/',
     )
     text = response.text
-    recent_post = search(r'the [A-Z].+Case', text)
-    box_name = recent_post[0].replace('#038;', '')[4:] if recent_post else False
+    recent_post = search(r'the .*[A-Z].+Case', text)
+    box_name = False
+    if recent_post:
+        box_name = recent_post[0].replace('#038;', '')[4:]
+        box_name = box_name[:box_name.find('Case') + 4]
+        box_name = ' '.join(filter(lambda w: w[0].isupper() or w[0].isdigit() or w[0] == '&', box_name.split()))
+
     return box_name
+
 
 def loop_alarm():
     p = vlc.MediaPlayer("alarm.mp3")
@@ -34,9 +39,9 @@ if __name__ == '__main__':
 
     driver = webdriver.Chrome(binary_yandex_driver_file, options=options)
 
-    req_time = 15
+    req_time = 10
     print('Checking for case update...')
-    new_box_name = check_case_update(2)
+    new_box_name = check_case_update()
     while not new_box_name:
         sleep(req_time)
         print('Checking for case update...')
@@ -46,7 +51,6 @@ if __name__ == '__main__':
     console_command = f'Market_ShowBuyOrderPopup(730, "{new_box_name}", "{new_box_name}")'
     print(f'NEW CASE RELEASE\nCommand for fast buy:\n{console_command}')
     driver.get(url)
-
     for cookie in pickle.load(open('steam_cookies', 'rb')):
         driver.add_cookie(cookie)
 
