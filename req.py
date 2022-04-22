@@ -47,11 +47,11 @@ if __name__ == '__main__':
         driver.add_cookie(cookie)
     driver.refresh()
 
-    # while datetime.now().time().hour != 0:
-    #    sleep(60)
+    while datetime.now().time().hour != 0:
+        sleep(60)
     req_time = 2
     print('Checking for case update...')
-    new_box_name = 'check'  # check_case_update()
+    new_box_name = False  # check_case_update()
     while not new_box_name:
         sleep(req_time)
         print('Checking for case update...')
@@ -68,8 +68,8 @@ if __name__ == '__main__':
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
         balance_element = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_walletbalance_amount"]').text
         balance = int(balance_element.split('руб')[0].split(',')[0])
-        cost = 130  # рублей
-        quant = balance // cost
+        cost = 1  # рублей
+        quant = 1
         price.send_keys(Keys.BACKSPACE*50, f'{cost}')
         sleep(0.1)
         quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
