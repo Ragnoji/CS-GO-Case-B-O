@@ -1,11 +1,9 @@
 from selenium import webdriver
 import pickle
 from time import sleep
-import asyncio
 from selenium.webdriver.common.keys import Keys
 
 GAME_INDEX = 252490
-COOKIES = pickle.load(open('steam_cookies', 'rb'))
 
 
 def main():
@@ -19,16 +17,20 @@ def main():
 
     list_of_items = open('target_items.txt', 'r')
     list_of_items = [tuple(item_line.strip().split()) for item_line in list_of_items.readlines()]
-
     addresses = {}
-    for item in list_of_items:
+    for i, item in enumerate(list_of_items):
         driver.get(url)
+        if i == 0:
+            for cookie in pickle.load(open('steam_cookies', 'rb')):
+                print(cookie)
+                driver.add_cookie(cookie)
+            driver.refresh()
+            sleep(1)
         addresses[item] = driver.current_window_handle
-        for cookie in COOKIES:
-            driver.add_cookie(cookie)
-        driver.refresh()
-        sleep(1)
+        sleep(2)
         driver.execute_script('window.open();')
+        driver.switch_to.window(driver.window_handles[-1])
+
     driver.execute_script('window.close();')
 
     index = 0
