@@ -86,7 +86,7 @@ if __name__ == '__main__':
         place.click()
         sleep(5)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
-        if not is_error or is_error == 'Sorry! We had trouble hearing back from the Steam servers about your order. Double check whether or not your order has actually been created or filled. If not, then please try again later.' or is_error == 'You cannot buy any items until your previous action completes.':
+        if is_error and (is_error == 'Sorry! We had trouble hearing back from the Steam servers about your order. Double check whether or not your order has actually been created or filled. If not, then please try again later.' or is_error == 'You cannot buy any items until your previous action completes.'):
             continue
 
         sleep(10)
