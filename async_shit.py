@@ -16,7 +16,11 @@ def main():
     url = 'https://steamcommunity.com/market/listings/730/Dreams%20%26%20Nightmares%20Case'
 
     list_of_items = open('target_items.txt', 'r')
-    list_of_items = [tuple(item_line.strip().split()) for item_line in list_of_items.readlines()]
+    list_of_items = list_of_items.read()
+    if not list_of_items:
+        print('create "target_items.txt" file with inputs')
+        return False
+    list_of_items = [tuple(item_line.strip().split()) for item_line in list_of_items]
     print(*list_of_items)
     driver.get(url)
     for cookie in pickle.load(open('steam_cookies', 'rb')):
