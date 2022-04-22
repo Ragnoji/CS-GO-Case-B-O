@@ -18,7 +18,8 @@ def check_case_update(page=1):
         box_name = recent_post[0].replace('#038;', '')[4:]
         box_name = box_name[:box_name.find('Case') + 4]
         box_name = ' '.join(filter(lambda w: w[0].isupper() or w[0].isdigit() or w[0] == '&', box_name.split()))
-
+        if box_name.find('Operation') != -1:
+            box_name = False
     return box_name
 
 
@@ -39,6 +40,12 @@ if __name__ == '__main__':
 
     driver = webdriver.Chrome(binary_yandex_driver_file, options=options)
 
+    url = f'https://steamcommunity.com/market'
+    driver.get(url)
+    for cookie in pickle.load(open('steam_cookies', 'rb')):
+        driver.add_cookie(cookie)
+    driver.refresh()
+
     req_time = 10
     print('Checking for case update...')
     new_box_name = check_case_update()
@@ -51,13 +58,8 @@ if __name__ == '__main__':
     console_command = f'Market_ShowBuyOrderPopup(730, "{new_box_name}", "{new_box_name}")'
     print(f'NEW CASE RELEASE\nCommand for fast buy:\n{console_command}')
     driver.get(url)
-    for cookie in pickle.load(open('steam_cookies', 'rb')):
-        driver.add_cookie(cookie)
-
+    driver.refresh()
     while True:
-        driver.refresh()
-        sleep(1)
-
         driver.execute_script(f'Market_ShowBuyOrderPopup(730, "{new_box_name}", "{new_box_name}")')
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
         balance_element = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_walletbalance_amount"]').text
@@ -80,6 +82,8 @@ if __name__ == '__main__':
         print(is_error)
         if not is_error or is_error == 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
             break
+
+        driver.refresh()
 
     loop_alarm()
 
