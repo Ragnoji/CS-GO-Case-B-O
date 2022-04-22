@@ -17,26 +17,14 @@ def main():
 
     list_of_items = open('target_items.txt', 'r')
     list_of_items = [tuple(item_line.strip().split()) for item_line in list_of_items.readlines()]
-    addresses = {}
-    for i, item in enumerate(list_of_items):
-        driver.get(url)
-        if i == 0:
-            for cookie in pickle.load(open('steam_cookies', 'rb')):
-                print(cookie)
-                driver.add_cookie(cookie)
-            driver.refresh()
-            sleep(1)
-        addresses[item] = driver.current_window_handle
-        sleep(2)
-        driver.execute_script('window.open();')
-        driver.switch_to.window(driver.window_handles[-1])
-
-    driver.execute_script('window.close();')
+    driver.get(url)
+    for cookie in pickle.load(open('steam_cookies', 'rb')):
+        driver.add_cookie(cookie)
+    driver.refresh()
 
     index = 0
     while list_of_items:
         item = list_of_items[index]
-        driver.switch_to.window(addresses[item])
         name = item[0]
         cost = item[1]
         quant = item[2]
@@ -59,8 +47,9 @@ def main():
         sleep(2)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         if not is_error or is_error == 'Sorry! We had trouble hearing back from the Steam servers about your order. Double check whether or not your order has actually been created or filled. If not, then please try again later.':
-            escape = driver.find_element_by_xpath('/html/body/div[16]/div[2]/div/div[1]')
-            escape.click()
+            index += 1
+            if index == len(list_of_items):
+                index = 0
             continue
         sleep(5)
 
