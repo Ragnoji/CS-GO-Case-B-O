@@ -51,7 +51,7 @@ if __name__ == '__main__':
         sleep(60)
     req_time = 2
     print('Checking for case update...')
-    new_box_name = False  # check_case_update()
+    new_box_name = check_case_update()
     while not new_box_name:
         sleep(req_time)
         print('Checking for case update...')
@@ -68,8 +68,8 @@ if __name__ == '__main__':
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
         balance_element = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_walletbalance_amount"]').text
         balance = int(balance_element.split('руб')[0].split(',')[0])
-        cost = 1  # рублей
-        quant = 1
+        cost = 125  # рублей
+        quant = balance // cost
         price.send_keys(Keys.BACKSPACE*50, f'{cost}')
         sleep(0.1)
         quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
@@ -91,6 +91,8 @@ if __name__ == '__main__':
 
         sleep(10)
         if not is_error or is_error == 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
+            message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {new_box_name}'
+            print(message)
             break
 
     loop_alarm()
