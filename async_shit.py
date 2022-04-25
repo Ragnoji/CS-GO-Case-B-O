@@ -67,8 +67,8 @@ def main():
 
         place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
         place.click()
-        sleep(2)
 
+        sleep(1)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         if is_error and (is_error == 'Sorry! We had trouble hearing back from the Steam servers about your order. Double check whether or not your order has actually been created or filled. If not, then please try again later.' or is_error == 'You cannot buy any items until your previous action completes.'):
             index += 1
@@ -78,8 +78,32 @@ def main():
                 accept_terms_flag = True
                 driver.refresh()
             continue
-        sleep(10)
 
+        sleep(1)
+        is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
+        if is_error and (
+                is_error == 'Sorry! We had trouble hearing back from the Steam servers about your order. Double check whether or not your order has actually been created or filled. If not, then please try again later.' or is_error == 'You cannot buy any items until your previous action completes.'):
+            index += 1
+            if index == len(list_of_items):
+                index = 0
+            if is_error == 'You cannot buy any items until your previous action completes.':
+                accept_terms_flag = True
+                driver.refresh()
+            continue
+
+        sleep(1)
+        is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
+        if is_error and (
+                is_error == 'Sorry! We had trouble hearing back from the Steam servers about your order. Double check whether or not your order has actually been created or filled. If not, then please try again later.' or is_error == 'You cannot buy any items until your previous action completes.'):
+            index += 1
+            if index == len(list_of_items):
+                index = 0
+            if is_error == 'You cannot buy any items until your previous action completes.':
+                accept_terms_flag = True
+                driver.refresh()
+            continue
+
+        sleep(2)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         print(is_error)
 
@@ -92,10 +116,64 @@ def main():
                 message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}'
                 logg.write(message)
                 print(message)
+            index += 1
+            if index == len(list_of_items):
+                index = 0
+            continue
 
-        index += 1
-        if index == len(list_of_items):
-            index = 0
+        sleep(2)
+        is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
+        print(is_error)
+
+        if not is_error or is_error == 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
+            del list_of_items[index]
+            index -= 1
+            accept_terms_flag = True
+            driver.refresh()
+            with open('log.txt', 'a', encoding='utf-8') as logg:
+                message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}'
+                logg.write(message)
+                print(message)
+            index += 1
+            if index == len(list_of_items):
+                index = 0
+            continue
+
+        sleep(2)
+        is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
+        print(is_error)
+
+        if not is_error or is_error == 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
+            del list_of_items[index]
+            index -= 1
+            accept_terms_flag = True
+            driver.refresh()
+            with open('log.txt', 'a', encoding='utf-8') as logg:
+                message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}'
+                logg.write(message)
+                print(message)
+            index += 1
+            if index == len(list_of_items):
+                index = 0
+            continue
+
+        sleep(2)
+        is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
+        print(is_error)
+
+        if not is_error or is_error == 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
+            del list_of_items[index]
+            index -= 1
+            accept_terms_flag = True
+            driver.refresh()
+            with open('log.txt', 'a', encoding='utf-8') as logg:
+                message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}'
+                logg.write(message)
+                print(message)
+            index += 1
+            if index == len(list_of_items):
+                index = 0
+            continue
 
 
 if __name__ == '__main__':
