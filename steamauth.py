@@ -29,7 +29,7 @@ try:
     sda_input = driver.find_element_by_xpath('//*[@id="twofactorcode_entry"]')
     sda_input.send_keys(input('Введите SteamGuard:\n'))
     sda_button = driver.find_element_by_xpath('//*[@id="login_twofactorauth_buttonset_entercode"]/div[1]').click()
-    time.sleep(5)
+    time.sleep(10)
 
     pickle.dump(driver.get_cookies(), open('steam_cookies', 'wb'))
 
