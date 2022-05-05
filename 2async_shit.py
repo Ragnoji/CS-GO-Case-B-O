@@ -1,6 +1,6 @@
 from selenium import webdriver
 import pickle
-from time import sleep
+from time import sleep, time
 from selenium.webdriver.common.keys import Keys
 from datetime import datetime
 
@@ -38,16 +38,28 @@ def main():
     driver.get(url)
     for cookie in pickle.load(open('steam_cookies', 'rb')):
         driver.add_cookie(cookie)
-    driver.refresh()
 
     index = 0
-
+    ti = time()
     while list_of_items:
+        sleep(1)
         item = list_of_items[index]
         name = item[0]
         cost = item[1]
         quant = item[2]
         console_command = f'Market_ShowBuyOrderPopup({GAME_INDEX}, "{name}", "{name}")'
+
+        # validate = f'https://steamcommunity.com/market/listings/{GAME_INDEX}/{name}'
+        ti2 = time()
+        print(ti2 - ti)
+        ti = time()
+        # driver.get(validate)
+        # if driver.find_elements_by_css_selector('#listings'):
+        #     index += 1
+        #     if index == len(list_of_items):
+        #         index = 0
+        #     continue
+        driver.refresh()
 
         try:
             driver.execute_script(console_command)
@@ -60,7 +72,6 @@ def main():
             for cookie in pickle.load(open('steam_cookies', 'rb')):
                 driver.add_cookie(cookie)
             driver.refresh()
-            sleep(1)
             driver.execute_script(console_command)
 
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
@@ -78,10 +89,28 @@ def main():
         place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
         place.click()
 
-        break_loop = False
+        sleep(0.5)
+        is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
+        if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
+            index += 1
+            if index == len(list_of_items):
+                index = 0
+            continue
 
-        for _ in range(7):
-            sleep(2)
+        del list_of_items[index]
+        index -= 1
+        with open('log.txt', 'a', encoding='utf-8') as logg:
+            message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}\n'
+            logg.write(message)
+            print(message)
+        index += 1
+        if index == len(list_of_items):
+            index = 0
+
+        '''break_loop = False
+
+        for _ in range(12):
+            sleep(1)
             is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
             commodity_status = driver.find_element_by_xpath('//*[@id="market_buy_commodity_status"]').text
 
@@ -110,7 +139,8 @@ def main():
 
         if break_loop:
             driver.refresh()
-            continue
+            continue'''
+
     driver.close()
 
 
