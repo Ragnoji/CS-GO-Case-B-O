@@ -76,20 +76,20 @@ def main():
 
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
         price.send_keys(Keys.BACKSPACE * 50, f'{cost}')
-        sleep(0.1)
+        # sleep(0.1)
 
         quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
         quantity.send_keys(Keys.BACKSPACE * 50, f'{quant}')
-        sleep(0.1)
+        # sleep(0.1)
 
         accept = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_accept_ssa"]')
         accept.click()
-        sleep(0.1)
+        # sleep(0.1)
 
         place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
         place.click()
 
-        sleep(0.5)
+        sleep(1)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
             index += 1

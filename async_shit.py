@@ -39,6 +39,8 @@ def main():
     for cookie in pickle.load(open('steam_cookies', 'rb')):
         driver.add_cookie(cookie)
 
+    while datetime.now().time().hour != 9 or datetime.now().time().minute != 59 or datetime.now().time().second < 55:
+        sleep(1)
     index = 0
     ti = time()
     while list_of_items:
@@ -76,15 +78,15 @@ def main():
 
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
         price.send_keys(Keys.BACKSPACE * 50, f'{cost}')
-        sleep(0.1)
+        # sleep(0.1)
 
         quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
         quantity.send_keys(Keys.BACKSPACE * 50, f'{quant}')
-        sleep(0.1)
+        # sleep(0.1)
 
         accept = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_accept_ssa"]')
         accept.click()
-        sleep(0.1)
+        # sleep(0.1)
 
         place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
         place.click()
