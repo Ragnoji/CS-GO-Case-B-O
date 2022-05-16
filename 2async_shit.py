@@ -3,6 +3,7 @@ import pickle
 from time import sleep, time
 from selenium.webdriver.common.keys import Keys
 from datetime import datetime
+from discord.ext import commands
 
 GAME_INDEX = 252490  # 252490
 
@@ -38,11 +39,26 @@ def main():
     driver.get(url)
     for cookie in pickle.load(open('steam_cookies', 'rb')):
         driver.add_cookie(cookie)
+    driver.refresh()
+
+    bot = commands.Bot(command_prefix='>')
+
+    @bot.event
+    async def on_message(msg):
+        if msg.author == bot.user:
+            return
+        if msg.embeds and 'Rust Store' in msg.embeds[0].title:
+            await bot.close()
+
+    bot.run('NjUwMzQxMTc3NTcyMTk2MzY0.GIPr5_.D_mTHc23pm_i58r-ja8LrZ2LzV10rKDvoAmleE')
+
+    while not bot.is_closed():
+        continue
 
     index = 0
     ti = time()
     while list_of_items:
-        sleep(1)
+        sleep(0.5)
         item = list_of_items[index]
         name = item[0]
         cost = item[1]
@@ -89,7 +105,7 @@ def main():
         place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
         place.click()
 
-        sleep(1)
+        sleep(0.5)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
             index += 1

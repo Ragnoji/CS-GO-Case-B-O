@@ -38,29 +38,24 @@ def main():
     driver.get(url)
     for cookie in pickle.load(open('steam_cookies', 'rb')):
         driver.add_cookie(cookie)
+    driver.refresh()
 
-    while datetime.now().time().hour != 9 or datetime.now().time().minute != 59 or datetime.now().time().second < 55:
+    while datetime.now().time().hour != 9 or datetime.now().time().minute != 59 or datetime.now().time().second < 58:
+        print(datetime.now().time().second)
         sleep(1)
     index = 0
     ti = time()
     while list_of_items:
-        sleep(1)
+        sleep(0.5)
         item = list_of_items[index]
         name = item[0]
         cost = item[1]
         quant = item[2]
         console_command = f'Market_ShowBuyOrderPopup({GAME_INDEX}, "{name}", "{name}")'
 
-        # validate = f'https://steamcommunity.com/market/listings/{GAME_INDEX}/{name}'
         ti2 = time()
         print(ti2 - ti)
         ti = time()
-        # driver.get(validate)
-        # if driver.find_elements_by_css_selector('#listings'):
-        #     index += 1
-        #     if index == len(list_of_items):
-        #         index = 0
-        #     continue
         driver.refresh()
 
         try:
@@ -104,44 +99,9 @@ def main():
         with open('log.txt', 'a', encoding='utf-8') as logg:
             message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}\n'
             logg.write(message)
-            print(message)
         index += 1
         if index == len(list_of_items):
             index = 0
-
-        '''break_loop = False
-
-        for _ in range(12):
-            sleep(1)
-            is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
-            commodity_status = driver.find_element_by_xpath('//*[@id="market_buy_commodity_status"]').text
-
-            if is_error and (is_error == 'Sorry! We had trouble hearing back from the Steam servers about your order. Double check whether or not your order has actually been created or filled. If not, then please try again later.' or is_error == 'You cannot buy any items until your previous action completes.'):
-                if is_error == 'You cannot buy any items until your previous action completes.':
-                    break_loop = True
-                    break
-                index += 1
-                if index == len(list_of_items):
-                    index = 0
-                break_loop = True
-                break
-
-            elif 'Success! Your buy order has been placed.' in commodity_status or is_error == 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
-                del list_of_items[index]
-                index -= 1
-                with open('log.txt', 'a', encoding='utf-8') as logg:
-                    message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}\n'
-                    logg.write(message)
-                    print(message)
-                index += 1
-                if index == len(list_of_items):
-                    index = 0
-                break_loop = True
-                break
-
-        if break_loop:
-            driver.refresh()
-            continue'''
 
     driver.close()
 
