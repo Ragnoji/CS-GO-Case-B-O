@@ -18,7 +18,7 @@ def main():
     url = 'https://steamcommunity.com/market/listings/730/Place'
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
-    list_of_items = open('target_items.txt', 'r')
+    list_of_items = open('target_items.txt', 'r', encoding='utf-8')
     list_of_items = list_of_items.readlines()
 
     if not list_of_items:
@@ -41,13 +41,23 @@ def main():
         driver.add_cookie(cookie)
     driver.refresh()
 
+    list_of_tabs = [driver.current_window_handle]
+    for _ in range(len(list_of_items) - 1):
+        sleep(2)
+        driver.execute_script(f'window.open("{url}")')
+        sleep(1)
+        for w in driver.window_handles:
+            if w not in list_of_tabs:
+                list_of_tabs.append(w)
+    driver.switch_to.window(list_of_tabs[0])
+
     bot = commands.Bot(command_prefix='>')
 
     @bot.event
     async def on_message(msg):
         if msg.author == bot.user:
             return
-        if msg.embeds and 'Rust Store' in msg.embeds[0].title:
+        if msg.embeds and 'Rust Item Definitions Updated' in msg.embeds[0].title:
             await bot.close()
 
     bot.run('NjUwMzQxMTc3NTcyMTk2MzY0.GIPr5_.D_mTHc23pm_i58r-ja8LrZ2LzV10rKDvoAmleE')
@@ -58,27 +68,21 @@ def main():
     index = 0
     ti = time()
     while list_of_items:
-        sleep(0.5)
         item = list_of_items[index]
         name = item[0]
         cost = item[1]
         quant = item[2]
         console_command = f'Market_ShowBuyOrderPopup({GAME_INDEX}, "{name}", "{name}")'
 
-        # validate = f'https://steamcommunity.com/market/listings/{GAME_INDEX}/{name}'
         ti2 = time()
         print(ti2 - ti)
         ti = time()
-        # driver.get(validate)
-        # if driver.find_elements_by_css_selector('#listings'):
-        #     index += 1
-        #     if index == len(list_of_items):
-        #         index = 0
-        #     continue
-        driver.refresh()
+        # driver.refresh()
 
+        driver.execute_script(console_command)
+        price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
         try:
-            driver.execute_script(console_command)
+            price.send_keys(Keys.BACKSPACE * 50, f'{cost}')
         except Exception:
             with open('log.txt', 'a', encoding='utf-8') as logg:
                 message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | слетела кука или баганула страница\n'
@@ -89,17 +93,16 @@ def main():
                 driver.add_cookie(cookie)
             driver.refresh()
             driver.execute_script(console_command)
-
-        price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        price.send_keys(Keys.BACKSPACE * 50, f'{cost}')
-        # sleep(0.1)
+            price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
+            price.send_keys(Keys.BACKSPACE * 50, f'{cost}')
 
         quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
         quantity.send_keys(Keys.BACKSPACE * 50, f'{quant}')
         # sleep(0.1)
 
         accept = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_accept_ssa"]')
-        accept.click()
+        if not accept.is_selected():
+            accept.click()
         # sleep(0.1)
 
         place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
@@ -111,51 +114,21 @@ def main():
             index += 1
             if index == len(list_of_items):
                 index = 0
+            driver.switch_to.window(list_of_tabs[index])
             continue
 
         del list_of_items[index]
-        index -= 1
+        del list_of_tabs[index]
+        if index == len(list_of_items):
+            index = 0
+
+        if list_of_items:
+            driver.switch_to.window(list_of_tabs[index])
+
         with open('log.txt', 'a', encoding='utf-8') as logg:
             message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}\n'
             logg.write(message)
             print(message)
-        index += 1
-        if index == len(list_of_items):
-            index = 0
-
-        '''break_loop = False
-
-        for _ in range(12):
-            sleep(1)
-            is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
-            commodity_status = driver.find_element_by_xpath('//*[@id="market_buy_commodity_status"]').text
-
-            if is_error and (is_error == 'Sorry! We had trouble hearing back from the Steam servers about your order. Double check whether or not your order has actually been created or filled. If not, then please try again later.' or is_error == 'You cannot buy any items until your previous action completes.'):
-                if is_error == 'You cannot buy any items until your previous action completes.':
-                    break_loop = True
-                    break
-                index += 1
-                if index == len(list_of_items):
-                    index = 0
-                break_loop = True
-                break
-
-            elif 'Success! Your buy order has been placed.' in commodity_status or is_error == 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
-                del list_of_items[index]
-                index -= 1
-                with open('log.txt', 'a', encoding='utf-8') as logg:
-                    message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}\n'
-                    logg.write(message)
-                    print(message)
-                index += 1
-                if index == len(list_of_items):
-                    index = 0
-                break_loop = True
-                break
-
-        if break_loop:
-            driver.refresh()
-            continue'''
 
     driver.close()
 

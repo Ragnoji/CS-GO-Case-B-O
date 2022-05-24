@@ -19,7 +19,7 @@ def differ():
         old_file = open('old_names', 'r', encoding='utf-8')
         print('Starting patch -', cached_id)
         while True:
-            sleep(2)
+            sleep(5)
             print(f'{datetime.now().strftime("%H:%M:%S")} | Checking ...')
             response = requests.get(
                 f'https://blog.counter-strike.net/index.php/category/updates/page/1/',
