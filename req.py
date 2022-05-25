@@ -8,6 +8,7 @@ import pickle
 from datetime import datetime
 from threading import Thread
 from differ_items import differ
+from weapon_parser import new_weapons
 
 
 def check_case_update():
@@ -60,7 +61,7 @@ def main():
             if v.endswith('"'):
                 list_of_knives[i] = [''.join(' '.join(tmp[:g + 1])[1:-1])] + tmp[g + 1:]
     print(*list_of_knives)
-    if input('Согласны с таргтами?') != '':
+    if input('Согласны с таргетами?') != '':
         return
     driver.get(url)
     for cookie in pickle.load(open('steam_cookies', 'rb')):
@@ -73,7 +74,7 @@ def main():
         new_items = check_case_update()
         sleep(1)
     Thread(target=loop_alarm).start()
-    new_box_name = False if 'Case' not in new_items[0] else new_items[0]
+    new_box_name = False if ('Case' not in new_items[0] or 'Sticker' in new_items[0]) else new_items[0]
     if 'Operation' in new_box_name:
         new_box_name = False
     console_command = f'Market_ShowBuyOrderPopup(730, "{new_box_name}", "{new_box_name}")'
@@ -83,7 +84,7 @@ def main():
             break
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        cost = 1
+        cost = 65
         try:
             price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
         except Exception:
@@ -124,6 +125,109 @@ def main():
             print(message)
         break
 
+    current_items = open('current_items.txt', 'r', encoding='utf-8').readlines()
+    old_items = open('old_items.txt', 'r', encoding='utf-8').readlines()
+    current_names = open('current_names.txt', 'r', encoding='utf-8').readlines()
+    new_skins = new_weapons(current_items, old_items, current_names)
+    list_of_items = []
+    list_of_tabs = []
+    if new_skins:
+        for collection in new_skins.keys():
+            for item in new_skins[collection]:
+                if 'Collection' in collection and item[1] == 'Covert':
+                    for exterior in ['Battle-Scarred', 'Well-Worn', 'Field-Tested', 'Minimal Wear', 'Factory New']:
+                        cost = 10000
+                        list_of_items.append((item[0] + f'({exterior})', cost, 2))
+
+                        sleep(1)
+                        driver.execute_script(f'window.open("{url}")')
+                        sleep(1)
+                        for w in driver.window_handles:
+                            if w not in list_of_tabs:
+                                list_of_tabs.append(w)
+                elif 'Case' in collection and item[1] == 'Covert':
+                    for exterior in ['Field-Tested', 'Minimal Wear', 'Factory New']:
+                        if exterior == 'Factory New':
+                            cost = 500
+                        elif exterior == 'Minimal Wear':
+                            cost = 200
+                        else:
+                            cost = 100
+                        list_of_items.append((item[0] + f'({exterior})', cost, 10))
+
+                        sleep(1)
+                        driver.execute_script(f'window.open("{url}")')
+                        sleep(1)
+                        for w in driver.window_handles:
+                            if w not in list_of_tabs:
+                                list_of_tabs.append(w)
+    driver.switch_to.window(list_of_tabs[0])
+    index = 0
+    ti = time()
+    while list_of_items:
+        item = list_of_items[index]
+        name = item[0]
+        cost = item[1]
+        quant = item[2]
+        console_command = f'Market_ShowBuyOrderPopup(730, "{name}", "{name}")'
+
+        ti2 = time()
+        print(ti2 - ti)
+        ti = time()
+        # driver.refresh()
+
+        driver.execute_script(console_command)
+        price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
+        try:
+            price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
+        except Exception:
+            with open('log.txt', 'a', encoding='utf-8') as logg:
+                message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | слетела кука или баганула страница\n'
+                logg.write(message)
+                print(message)
+            driver.get(url)
+            for cookie in pickle.load(open('steam_cookies', 'rb')):
+                driver.add_cookie(cookie)
+            driver.refresh()
+            driver.execute_script(console_command)
+            price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
+            price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
+
+        quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
+        quantity.send_keys(Keys.BACKSPACE * 20, f'{quant}')
+        # sleep(0.1)
+
+        accept = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_accept_ssa"]')
+        if not accept.is_selected():
+            accept.click()
+        # sleep(0.1)
+
+        place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
+        place.click()
+
+        sleep(1)
+        is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
+        # driver.refresh()
+        if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
+            index += 1
+            if index == len(list_of_items):
+                index = 0
+            driver.switch_to.window(list_of_tabs[index])
+            continue
+
+        del list_of_items[index]
+        del list_of_tabs[index]
+        if index == len(list_of_items):
+            index = 0
+
+        if list_of_items:
+            driver.switch_to.window(list_of_tabs[index])
+
+        with open('log.txt', 'a', encoding='utf-8') as logg:
+            message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}\n'
+            logg.write(message)
+
+    list_of_tabs = []
     if new_box_name:
         for _ in range(len(list_of_knives)):
             sleep(2)
@@ -132,7 +236,6 @@ def main():
             for w in driver.window_handles:
                 if w not in list_of_tabs:
                     list_of_tabs.append(w)
-    list_of_tabs = list_of_tabs[1:]
     driver.switch_to.window(list_of_tabs[0])
     index = 0
     ti = time()
@@ -195,90 +298,6 @@ def main():
             index = 0
 
         if list_of_knives:
-            driver.switch_to.window(list_of_tabs[index])
-
-        with open('log.txt', 'a', encoding='utf-8') as logg:
-            message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}\n'
-            logg.write(message)
-
-    list_of_items = []
-    if not new_box_name:
-        if 'Case' not in new_items[0]:
-            list_of_items = new_items
-        else:
-            list_of_items = new_items[1:]
-    list_of_items = [(i, 80, 15) if '(Gold' in i else (i, 10, 30) for i in list_of_items if '(Gold' in i or '(Holo' in i]
-    if list_of_items:
-        for _ in range(len(list_of_items)):
-            sleep(2)
-            driver.execute_script(f'window.open("{url}")')
-            sleep(1)
-            for w in driver.window_handles:
-                if w not in list_of_tabs:
-                    list_of_tabs.append(w)
-    list_of_tabs = list_of_tabs[1:]
-    driver.switch_to.window(list_of_tabs[0])
-    index = 0
-    ti = time()
-    while list_of_items:
-        if new_box_name:
-            break
-        item = list_of_items[index]
-        name = item[0]
-        cost = item[1]
-        quant = item[2]
-        console_command = f'Market_ShowBuyOrderPopup(730, "{name}", "{name}")'
-
-        ti2 = time()
-        print(ti2 - ti)
-        ti = time()
-        # driver.refresh()
-
-        driver.execute_script(console_command)
-        price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        try:
-            price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
-        except Exception:
-            with open('log.txt', 'a', encoding='utf-8') as logg:
-                message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | слетела кука или баганула страница\n'
-                logg.write(message)
-                print(message)
-            driver.get(url)
-            for cookie in pickle.load(open('steam_cookies', 'rb')):
-                driver.add_cookie(cookie)
-            driver.refresh()
-            driver.execute_script(console_command)
-            price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-            price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
-
-        quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
-        quantity.send_keys(Keys.BACKSPACE * 20, f'{quant}')
-        # sleep(0.1)
-
-        accept = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_accept_ssa"]')
-        if not accept.is_selected():
-            accept.click()
-        # sleep(0.1)
-
-        place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
-        place.click()
-
-        sleep(1)
-        is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
-        # driver.refresh()
-        if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
-            index += 1
-            if index == len(list_of_items):
-                index = 0
-            driver.switch_to.window(list_of_tabs[index])
-            continue
-
-        del list_of_items[index]
-        del list_of_tabs[index]
-        if index == len(list_of_items):
-            index = 0
-
-        if list_of_items:
             driver.switch_to.window(list_of_tabs[index])
 
         with open('log.txt', 'a', encoding='utf-8') as logg:
