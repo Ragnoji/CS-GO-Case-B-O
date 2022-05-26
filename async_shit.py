@@ -96,7 +96,7 @@ def main():
         place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
         place.click()
 
-        sleep(0.4)
+        sleep(0.45)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         # driver.refresh()
         if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
