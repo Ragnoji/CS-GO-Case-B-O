@@ -88,7 +88,7 @@ def main():
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
         try:
-            price.send_keys(Keys.BACKSPACE * 50, f'{cost}')
+            price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
         except Exception:
             with open('log.txt', 'a', encoding='utf-8') as logg:
                 message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | слетела кука или баганула страница\n'
@@ -118,10 +118,6 @@ def main():
         sleep(0.3)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
-            index += 1
-            if index == len(list_of_items):
-                index = 0
-            driver.switch_to.window(list_of_tabs[index])
             continue
 
         del list_of_items[index]
