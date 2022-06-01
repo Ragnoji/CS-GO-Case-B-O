@@ -114,7 +114,7 @@ def differ():
             output.write('')
             return items
         ind = 0
-        while 'Case' in items[ind]:
+        while 'Case' in items[ind] and '|' not in items[ind]:
             output.write(f'<p><a href="https://steamcommunity.com/market/listings/730/{items[ind]}">{items[ind]}\t</a></p>')
             ind += 1
             if ind == len(items):
