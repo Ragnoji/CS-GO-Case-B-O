@@ -37,8 +37,9 @@ def cookie_gen():
         sda_button = driver.find_element_by_xpath('//*[@id="login_twofactorauth_buttonset_entercode"]/div[1]')
         sda_button.click()
         time.sleep(8)
-
+        print(driver.get_cookies())
         pickle.dump(driver.get_cookies(), open('steam_cookies', 'wb'))
+        pickle.dump(driver.get_cookies(), open('workers/steam_cookies', 'wb'))
 
     except Exception as ex:
         print(ex)

@@ -62,50 +62,54 @@ def differ():
                 print(f'{datetime.now().strftime("%H:%M:%S")} | {cached_id}')
                 break
 
-        current_names = open('current_names.txt', 'w', encoding='utf-8')
-        while True:
-            try:
-                response = requests.get(url)
-            except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
-                sleep(5)
-                continue
-            break
-        current_names.write(response.text)
-        current_names.close()
-        current_names = open('current_names.txt', 'r', encoding='utf-8')
-        current_names = current_names.readlines()
-
-        current_items = open('current_items.txt', 'w', encoding='utf-8')
-        while True:
-            try:
-                response = requests.get(url_items)
-            except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
-                sleep(5)
-                continue
-            break
-        current_items.write(response.text)
-        current_items.close()
-
-        for line in old_file.readlines():
-            try:
-                i = current_names.index(line)
-            except ValueError:
-                continue
-            del current_names[i]
-
-        items = []
-        for line in current_names:
-            if line.count('"') == 4:
-                ri = line.rindex('"')
-                li = line[:ri].rfind('"')
-                lli = line[:li].find('"')
-                rri = line[:li].rfind('"')
-                if ('CSGO_crate_community' not in line[lli + 1:rri] and 'StickerKit' not in line[lli + 1:rri]) or 'desc' in line[lli + 1:rri]:
+        for _ in range(10):
+            current_names = open('current_names.txt', 'w', encoding='utf-8')
+            while True:
+                try:
+                    response = requests.get(url)
+                except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
+                    sleep(5)
                     continue
-                if 'CSGO_crate_community' in line[lli + 1:rri]:
-                    items.insert(0, f'{line[li + 1:ri]}')
-                else:
-                    items.append(f'Sticker | {line[li + 1:ri]}')
+                break
+            current_names.write(response.text)
+            current_names.close()
+            current_names = open('current_names.txt', 'r', encoding='utf-8')
+            current_names = current_names.readlines()
+
+            current_items = open('current_items.txt', 'w', encoding='utf-8')
+            while True:
+                try:
+                    response = requests.get(url_items)
+                except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
+                    sleep(5)
+                    continue
+                break
+            current_items.write(response.text)
+            current_items.close()
+
+            for line in old_file.readlines():
+                try:
+                    i = current_names.index(line)
+                except ValueError:
+                    continue
+                del current_names[i]
+
+            items = []
+            for line in current_names:
+                if line.count('"') == 4:
+                    ri = line.rindex('"')
+                    li = line[:ri].rfind('"')
+                    lli = line[:li].find('"')
+                    rri = line[:li].rfind('"')
+                    if ('CSGO_crate_community' not in line[lli + 1:rri] and 'StickerKit' not in line[lli + 1:rri]) or 'desc' in line[lli + 1:rri]:
+                        continue
+                    if 'CSGO_crate_community' in line[lli + 1:rri]:
+                        items.insert(0, f'{line[li + 1:ri]}')
+                    else:
+                        items.append(f'Sticker | {line[li + 1:ri]}')
+            if items:
+                break
+
         if not items:
             output.write('')
             return items

@@ -3,9 +3,9 @@ import time
 
 
 def new_weapons(current_items: list[str], old_items: list[str], current_names: list[str]) -> dict:
-    '''current_items = open('items_game.txt', 'r', encoding='utf-8').readlines()
-    old_items = open('old_items_game.txt', 'r', encoding='utf-8').readlines()
-    current_names = open('current_names.txt', 'r', encoding='utf-8').readlines()'''
+    # current_items = open('current_items.txt', 'r', encoding='utf-8').readlines()
+    # old_items = open('old_items.txt', 'r', encoding='utf-8').readlines()
+    # current_names = open('current_names.txt', 'r', encoding='utf-8').readlines()
 
     new_items = dict()
     ti = time.time()
@@ -100,20 +100,30 @@ def new_weapons(current_items: list[str], old_items: list[str], current_names: l
         tmp = ''
         id = 0
         tag = 'PaintKit_' + re.search('(?<=\[).+(?=\])', item)[0] + '_Tag'
-        for line in current_names[::-1]:
+        floats = []
+        for id2, line in enumerate(current_names[::-1]):
             if tag in line:
                 line = line[:line.rfind('"')]
                 tmp = line[line.rfind('"') + 1:]
+                while True:
+                    id2 -= 1
+                    if len(floats) == 2:
+                        break
+                    if '"wear_remap_min"' in current_items[-1 - id2] or '"wear_remap_max"' in current_items[-1 - id2]:
+                        fl = current_items[-1 - id2]
+                        fl = fl[:fl.rfind('"')]
+                        fl = fl[fl.rfind('"') + 1:]
+                        floats.append(float(fl))
                 break
         if not tmp:
             for i in current_items:
                 if '"name"\t\t"' + re.search('(?<=\[).+(?=\])', item)[0] + '"' in i:
                     break
                 id += 1
-            tag = ''
             while True:
                 id += 1
-                if id >= len(current_items) or tmp != '':
+                if id >= len(current_items) or (tmp != '' and len(floats) == 2):
+                    floats.sort()
                     break
                 if '"description_tag"' in current_items[id]:
                     tag = re.search('PaintKit.+(?=")', current_items[id])[0]
@@ -121,23 +131,37 @@ def new_weapons(current_items: list[str], old_items: list[str], current_names: l
                         if tag in line:
                             line = line[:line.rfind('"')]
                             tmp = line[line.rfind('"') + 1:]
-                            break
+                elif '"wear_remap_min"' in current_items[id] or '"wear_remap_max"' in current_items[id]:
+                    fl = current_items[id]
+                    fl = fl[:fl.rfind('"')]
+                    fl = fl[fl.rfind('"') + 1:]
+                    floats.append(float(fl))
+        exteriors = []
+        if floats[1] > 0.45:
+            exteriors.append('Battle-Scarred')
+        if floats[1] > 0.38 and floats[0] < 0.45:
+            exteriors.append('Well-Worn')
+        if floats[1] > 0.15 and floats[0] < 0.38:
+            exteriors.append('Field-Tested')
+        if floats[1] > 0.07 and floats[0] < 0.15:
+            exteriors.append('Minimal Wear')
+        if floats[0] < 0.07:
+            exteriors.append('Factory New')
         weapon_string = '"' + item[item.find(']') + 1:-1] + '_prefab"'
         weapon_type = weapon_types[weapon_string]
         tmp = weapon_type + ' | ' + tmp
         if new_items[item][1] not in parsed_names:
-            parsed_names[new_items[item][1]] = [(tmp, new_items[item][0])]
+            parsed_names[new_items[item][1]] = [(tmp, new_items[item][0], exteriors)]
         elif (tmp, new_items[item][0]) not in parsed_names[new_items[item][1]]:
-            parsed_names[new_items[item][1]].append((tmp, new_items[item][0]))
+            parsed_names[new_items[item][1]].append((tmp, new_items[item][0], exteriors))
 
     if parsed_names:
-        exteriors = ['Battle-Scarred', 'Well-Worn', 'Field-Tested', 'Minimal Wear', 'Factory New']
         with open("new_weapons.html", "w", encoding='utf-8') as output:
             for collection in parsed_names.keys():
                 output.write(f'<p style="font-size: 30px; text-decoration: none">{collection}</p>')
                 for item in parsed_names[collection]:
                     output.write(f'<p style="font-size: 15px; text-decoration: none">{item[0]} ({item[1]})')
-                    for exterior in exteriors:
+                    for exterior in item[2]:
                         output.write(f'....<a style="font-size: 20px; text-decoration: none" href="https://steamcommunity.com/market/listings/730/{item[0]} ({exterior})">{exterior}</a>')
                     output.write('</p>')
 
