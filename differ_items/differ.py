@@ -10,15 +10,15 @@ def differ():
         while True:
             try:
                 response = requests.get(
-                    f'https://blog.counter-strike.net/index.php/category/updates/page/1/',
+                    f'https://github.com/SteamDatabase/GameTracking-CSGO',
                 )
             except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
                 sleep(10)
                 continue
             break
-        recent_post = BeautifulSoup(response.text, features='lxml')
-        recent_post = recent_post.find("div", "inner_post").getText()
-        cached_id = recent_post.split('\n')[1]
+
+        old_data = BeautifulSoup(response.text, features='lxml')
+        old_id = old_data.find("a", "f6 Link--secondary text-mono ml-2 d-none d-lg-inline").getText().strip()
         url = 'https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/master/csgo/resource/csgo_english.txt'
         old_file = open('old_names.txt', 'w', encoding='utf-8')
         while True:
@@ -42,27 +42,28 @@ def differ():
         old_items.write(response.text)
         old_items.close()
         old_file = open('old_names.txt', 'r', encoding='utf-8')
-        print('Starting patch -', cached_id)
+        print('Starting commit -', old_id)
         while True:
-            sleep(5)
+            sleep(10)
             print(f'{datetime.now().strftime("%H:%M:%S")} | Checking ...')
             while True:
                 try:
                     response = requests.get(
-                        f'https://blog.counter-strike.net/index.php/category/updates/page/1/',
+                        f'https://github.com/SteamDatabase/GameTracking-CSGO',
                     )
                 except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
                     sleep(10)
                     continue
                 break
-            recent_post = BeautifulSoup(response.text, features='lxml')
-            recent_post = recent_post.find("div", "inner_post").getText()
-            if recent_post.split('\n')[1] != cached_id:
-                cached_id = recent_post.split('\n')[1]
-                print(f'{datetime.now().strftime("%H:%M:%S")} | {cached_id}')
+
+            old_data = BeautifulSoup(response.text, features='lxml')
+            current_id = old_data.find("a", "f6 Link--secondary text-mono ml-2 d-none d-lg-inline").getText().strip()
+            if current_id != old_id:
+                old_id = current_id
+                print(f'{datetime.now().strftime("%H:%M:%S")} | {old_id}')
                 break
 
-        for _ in range(10):
+        for _ in range(3):
             current_names = open('current_names.txt', 'w', encoding='utf-8')
             while True:
                 try:

@@ -22,7 +22,7 @@ def check_case_update():
             'CS:GO Weapon Case', 'eSports 2013 Winter Case', 'Operation Hydra Case', 'eSports 2013 Case',
             'Operation Bravo Case']
     box_name = differ.differ()
-    if box_name and 'Case' in box_name[0] and box_name[0] not in past:
+    if box_name and 'Case' in box_name[0] and '|' not in box_name[0] and box_name[0] not in past:
         return box_name[0]
     return False
 
