@@ -10,7 +10,7 @@ def differ():
         while True:
             try:
                 response = requests.get(
-                    f'https://github.com/SteamDatabase/GameTracking-CSGO',
+                    f'https://github.com/SteamDatabase/GameTracking-CSGO/commits/master',
                 )
             except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
                 sleep(10)
@@ -18,8 +18,7 @@ def differ():
             break
 
         old_data = BeautifulSoup(response.text, features='lxml')
-        old_id = old_data.find("a", "f6 Link--secondary text-mono ml-2 d-none d-lg-inline").getText().strip()
-        old_id = '2131'
+        old_id = old_data.find("a", "tooltipped tooltipped-sw btn-outline btn BtnGroup-item text-mono f6").getText().strip()
         url = 'https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/master/csgo/resource/csgo_english.txt'
         old_file = open('old_names.txt', 'w', encoding='utf-8')
         while True:
@@ -47,21 +46,21 @@ def differ():
         old_file = open('old_names.txt', 'r', encoding='utf-8')
         print('Starting commit -', old_id)
         while True:
-            sleep(5)
+            sleep(2)
             print(f'{datetime.now().strftime("%H:%M:%S")} | Checking ...', end='')
             while True:
                 try:
                     response = requests.get(
-                        f'https://github.com/SteamDatabase/GameTracking-CSGO',
+                        f'https://github.com/SteamDatabase/GameTracking-CSGO/commits/master',
                     )
                 except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
                     sleep(5)
                     continue
                 break
 
-            sleep(5)
+            sleep(3)
             old_data = BeautifulSoup(response.text, features='lxml')
-            current_id = old_data.find("a", "f6 Link--secondary text-mono ml-2 d-none d-lg-inline").getText().strip()
+            current_id = old_data.find("a", "tooltipped tooltipped-sw btn-outline btn BtnGroup-item text-mono f6").getText().strip()
             if current_id != old_id:
                 old_id = current_id
                 print(f'\n{datetime.now().strftime("%H:%M:%S")} | {old_id}')
