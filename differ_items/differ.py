@@ -19,10 +19,12 @@ def differ():
 
         old_data = BeautifulSoup(response.text, features='lxml')
         old_id = old_data.find("a", "f6 Link--secondary text-mono ml-2 d-none d-lg-inline").getText().strip()
+        old_id = '2131'
         url = 'https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/master/csgo/resource/csgo_english.txt'
         old_file = open('old_names.txt', 'w', encoding='utf-8')
         while True:
             try:
+                sleep(1)
                 response = requests.get(url)
             except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
                 sleep(5)
@@ -34,6 +36,7 @@ def differ():
         old_items = open('old_items.txt', 'w', encoding='utf-8')
         while True:
             try:
+                sleep(1)
                 response = requests.get(url_items)
             except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
                 sleep(5)
@@ -44,29 +47,34 @@ def differ():
         old_file = open('old_names.txt', 'r', encoding='utf-8')
         print('Starting commit -', old_id)
         while True:
-            sleep(10)
-            print(f'{datetime.now().strftime("%H:%M:%S")} | Checking ...')
+            sleep(5)
+            print(f'{datetime.now().strftime("%H:%M:%S")} | Checking ...', end='')
             while True:
                 try:
                     response = requests.get(
                         f'https://github.com/SteamDatabase/GameTracking-CSGO',
                     )
                 except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
-                    sleep(10)
+                    sleep(5)
                     continue
                 break
 
+            sleep(5)
             old_data = BeautifulSoup(response.text, features='lxml')
             current_id = old_data.find("a", "f6 Link--secondary text-mono ml-2 d-none d-lg-inline").getText().strip()
             if current_id != old_id:
                 old_id = current_id
-                print(f'{datetime.now().strftime("%H:%M:%S")} | {old_id}')
+                print(f'\n{datetime.now().strftime("%H:%M:%S")} | {old_id}')
                 break
+            else:
+                print(f'Nothing new ({current_id})')
 
-        for _ in range(3):
+        old_lines = old_file.readlines()
+        for _ in range(1):
             current_names = open('current_names.txt', 'w', encoding='utf-8')
             while True:
                 try:
+                    sleep(1)
                     response = requests.get(url)
                 except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
                     sleep(5)
@@ -80,6 +88,7 @@ def differ():
             current_items = open('current_items.txt', 'w', encoding='utf-8')
             while True:
                 try:
+                    sleep(1)
                     response = requests.get(url_items)
                 except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
                     sleep(5)
@@ -88,15 +97,10 @@ def differ():
             current_items.write(response.text)
             current_items.close()
 
-            for line in old_file.readlines():
-                try:
-                    i = current_names.index(line)
-                except ValueError:
-                    continue
-                del current_names[i]
-
             items = []
             for line in current_names:
+                if line in old_lines:
+                    continue
                 if line.count('"') == 4:
                     ri = line.rindex('"')
                     li = line[:ri].rfind('"')
