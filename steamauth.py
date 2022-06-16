@@ -2,6 +2,7 @@ from selenium import webdriver
 from steam_data import steam_login, steam_password
 import time
 import pickle
+from selenium.webdriver.common.keys import Keys
 # from steam.guard import SteamAuthenticator
 # import json
 
@@ -19,12 +20,12 @@ def cookie_gen():
 
         login_input = driver.find_element_by_id("input_username")
         login_input.clear()
-        login_input.send_keys(steam_login)
+        login_input.send_keys(Keys.BACKSPACE * 20, steam_login)
         time.sleep(1)
 
         password_input = driver.find_element_by_id("input_password")
         password_input.clear()
-        password_input.send_keys(steam_password)
+        password_input.send_keys(Keys.BACKSPACE * 20, steam_password)
         time.sleep(1)
 
         login_button = driver.find_element_by_xpath('//*[@id="login_btn_signin"]/button')
@@ -37,7 +38,6 @@ def cookie_gen():
         sda_button = driver.find_element_by_xpath('//*[@id="login_twofactorauth_buttonset_entercode"]/div[1]')
         sda_button.click()
         time.sleep(8)
-        print(driver.get_cookies())
         pickle.dump(driver.get_cookies(), open('steam_cookies', 'wb'))
         pickle.dump(driver.get_cookies(), open('workers/steam_cookies', 'wb'))
 

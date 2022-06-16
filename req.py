@@ -74,7 +74,7 @@ def main():
         new_box_name, stickers = check_case_update()
         sleep(1)
     Thread(target=loop_alarm).start()
-    if 'Operation' in new_box_name:
+    if isinstance(new_box_name, str) and 'Operation' in new_box_name:
         new_box_name = False
     console_command = f'Market_ShowBuyOrderPopup(730, "{new_box_name}", "{new_box_name}")'
     print(f'NEW CASE RELEASE\nCommand for fast buy:\n{console_command}')
@@ -86,7 +86,7 @@ def main():
             driver.refresh()
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        cost = 75
+        cost = 67
         try:
             price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
         except Exception:
@@ -115,7 +115,7 @@ def main():
 
         place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
         place.click()
-        sleep(0.5)
+        sleep(0.45)
         count += 1
 
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
@@ -168,11 +168,12 @@ def main():
                         else:
                             cost = 75
                         list_of_classified.append((item[0] + f' ({exterior})', cost, 20))
-
-    covert_worker = Thread(target=worker, args=(list_of_covert, 0.8))
-    covert_worker.start()
-    classified_worker = Thread(target=worker, args=(list_of_classified, 0.8))
-    classified_worker.start()
+    if list_of_covert:
+        covert_worker = Thread(target=worker, args=(list_of_covert, 1))
+        covert_worker.start()
+    if list_of_classified:
+        classified_worker = Thread(target=worker, args=(list_of_classified, 1))
+        classified_worker.start()
 
     # index = 0
     # ti = time()
@@ -245,11 +246,13 @@ def main():
 
     stickers = list(map(lambda s: (s, 10, 100) if 'Holo' in s else (s, 80, 25),
                         filter(lambda s: 'Holo' in s or 'Gold' in s, stickers)))
-
-    sticker_worker = Thread(target=worker, args=(stickers, 0.8))
-    sticker_worker.start()
-    covert_worker.join()
-    classified_worker.join()
+    if stickers:
+        sticker_worker = Thread(target=worker, args=(stickers, 1))
+        sticker_worker.start()
+    if list_of_covert:
+        covert_worker.join()
+    if list_of_classified:
+        classified_worker.join()
 
     list_of_tabs = []
     if new_box_name:
