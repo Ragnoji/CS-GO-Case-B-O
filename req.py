@@ -74,8 +74,10 @@ def main():
         new_box_name, stickers = check_case_update()
         sleep(1)
     Thread(target=loop_alarm).start()
+    is_operation = False
     if isinstance(new_box_name, str) and 'Operation' in new_box_name:
         new_box_name = False
+        is_operation = True
     console_command = f'Market_ShowBuyOrderPopup(730, "{new_box_name}", "{new_box_name}")'
     print(f'NEW CASE RELEASE\nCommand for fast buy:\n{console_command}')
     count = 0
@@ -140,14 +142,14 @@ def main():
                 if 'Collection' in collection and item[1] == 'Covert':
                     for exterior in item[2]:
                         cost = 8000
-                        list_of_covert.append((item[0] + f' ({exterior})', cost, 3))
+                        list_of_covert.append((item[0] + f' ({exterior})', cost, 4))
 
                 elif 'Collection' in collection and item[1] == 'Classified':
                     for exterior in item[2]:
-                        cost = 2000
+                        cost = 3000
                         list_of_classified.append((item[0] + f' ({exterior})', cost, 6))
 
-                elif 'Case' in collection and item[1] == 'Covert':
+                elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
                     for exterior in item[2]:
                         if exterior == 'Factory New':
                             cost = 500
@@ -157,7 +159,7 @@ def main():
                             cost = 100
                         list_of_covert.append((item[0] + f' ({exterior})', cost, 20))
 
-                elif 'Case' in collection and item[1] == 'Classified':
+                elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Classified':
                     for exterior in item[2]:
                         if exterior == 'Factory New':
                             cost = 400
@@ -169,172 +171,31 @@ def main():
                             cost = 75
                         list_of_classified.append((item[0] + f' ({exterior})', cost, 20))
     if list_of_covert:
-        covert_worker = Thread(target=worker, args=(list_of_covert, 1))
+        covert_worker = Thread(target=worker, args=(list_of_covert, 2.5))
         covert_worker.start()
+
     if list_of_classified:
-        classified_worker = Thread(target=worker, args=(list_of_classified, 1))
+        classified_worker = Thread(target=worker, args=(list_of_classified, 2.5))
         classified_worker.start()
 
-    # index = 0
-    # ti = time()
-    # while list_of_items:
-    #     item = list_of_items[index]
-    #     name = item[0]
-    #     cost = item[1]
-    #     quant = item[2]
-    #     console_command = f'Market_ShowBuyOrderPopup(730, "{name}", "{name}")'
-    #
-    #     ti2 = time()
-    #     print(ti2 - ti)
-    #     ti = time()
-    #     if count[name] == 20:
-    #         driver.refresh()
-    #         count[name] = 0
-    #     count[name] += 1
-    #
-    #     driver.execute_script(console_command)
-    #     price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-    #     try:
-    #         price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
-    #     except Exception:
-    #         with open('log.txt', 'a', encoding='utf-8') as logg:
-    #             message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | слетела кука или баганула страница\n'
-    #             logg.write(message)
-    #             print(message)
-    #         driver.get(url)
-    #         for cookie in pickle.load(open('steam_cookies', 'rb')):
-    #             driver.add_cookie(cookie)
-    #         driver.refresh()
-    #         driver.execute_script(console_command)
-    #         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-    #         price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
-    #
-    #     quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
-    #     quantity.send_keys(Keys.BACKSPACE * 20, f'{quant}')
-    #     # sleep(0.1)
-    #
-    #     accept = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_accept_ssa"]')
-    #     if not accept.is_selected():
-    #         accept.click()
-    #     # sleep(0.1)
-    #
-    #     place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
-    #     place.click()
-    #
-    #     sleep(1.5)
-    #     is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
-    #     # driver.refresh()
-    #     if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
-    #         index += 1
-    #         if index == len(list_of_items):
-    #             index = 0
-    #         driver.switch_to.window(list_of_tabs[index])
-    #         continue
-    #
-    #     del list_of_items[index]
-    #     del list_of_tabs[index]
-    #     if index == len(list_of_items):
-    #         index = 0
-    #
-    #     if list_of_items:
-    #         driver.switch_to.window(list_of_tabs[index])
-    #
-    #     with open('log.txt', 'a', encoding='utf-8') as logg:
-    #         message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}\n'
-    #         logg.write(message)
-    # del count
-
-    stickers = list(map(lambda s: (s, 10, 100) if 'Holo' in s else (s, 80, 25),
+    stickers = list(map(lambda s: (s, 10, 100) if 'Holo' in s else (s, 75, 25),
                         filter(lambda s: 'Holo' in s or 'Gold' in s, stickers)))
     if stickers:
         sticker_worker = Thread(target=worker, args=(stickers, 1))
         sticker_worker.start()
+
+    if new_box_name or is_operation:
+        knives_worker = Thread(target=worker, args=(list_of_knives, 3))
+        knives_worker.start()
+
+    if stickers:
+        sticker_worker.join()
+    if new_box_name or is_operation:
+        knives_worker.join()
     if list_of_covert:
         covert_worker.join()
     if list_of_classified:
         classified_worker.join()
-
-    list_of_tabs = []
-    if new_box_name:
-        for _ in range(len(list_of_knives)):
-            sleep(2)
-            driver.execute_script(f'window.open("{url}")')
-            sleep(1)
-            for w in driver.window_handles:
-                if w not in list_of_tabs:
-                    list_of_tabs.append(w)
-    driver.switch_to.window(list_of_tabs[0])
-    index = 0
-    ti = time()
-    while list_of_knives:
-        if not new_box_name:
-            break
-        item = list_of_knives[index]
-        name = item[0]
-        cost = item[1]
-        quant = item[2]
-        console_command = f'Market_ShowBuyOrderPopup(730, "{name}", "{name}")'
-
-        ti2 = time()
-        print(ti2 - ti)
-        ti = time()
-        if count_knives[name] == 10:
-            driver.refresh()
-            count_knives[name] = 0
-        count_knives[name] += 1
-
-        driver.execute_script(console_command)
-        price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        try:
-            price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
-        except Exception:
-            with open('log.txt', 'a', encoding='utf-8') as logg:
-                message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | слетела кука или баганула страница\n'
-                logg.write(message)
-                print(message)
-            driver.get(url)
-            for cookie in pickle.load(open('steam_cookies', 'rb')):
-                driver.add_cookie(cookie)
-            driver.refresh()
-            driver.execute_script(console_command)
-            price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-            price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
-
-        quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
-        quantity.send_keys(Keys.BACKSPACE * 20, f'{quant}')
-        # sleep(0.1)
-
-        accept = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_accept_ssa"]')
-        if not accept.is_selected():
-            accept.click()
-        # sleep(0.1)
-
-        place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
-        place.click()
-
-        sleep(1)
-        is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
-        # driver.refresh()
-        if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
-            index += 1
-            if index == len(list_of_knives):
-                index = 0
-            driver.switch_to.window(list_of_tabs[index])
-            continue
-
-        del list_of_knives[index]
-        del list_of_tabs[index]
-        if index == len(list_of_knives):
-            index = 0
-
-        if list_of_knives:
-            driver.switch_to.window(list_of_tabs[index])
-
-        with open('log.txt', 'a', encoding='utf-8') as logg:
-            message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {name} | {cost} руб | {quant}\n'
-            logg.write(message)
-
-    sticker_worker.join()
     driver.close()
 
 
