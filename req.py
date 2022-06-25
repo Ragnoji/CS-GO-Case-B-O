@@ -73,6 +73,7 @@ def main():
     while not new_box_name and not stickers:
         new_box_name, stickers = check_case_update()
         sleep(1)
+    driver.refresh()
     Thread(target=loop_alarm).start()
     is_operation = False
     if isinstance(new_box_name, str) and 'Operation' in new_box_name:
@@ -88,7 +89,7 @@ def main():
             driver.refresh()
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        cost = 67
+        cost = 65
         try:
             price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
         except Exception:
@@ -142,12 +143,12 @@ def main():
                 if 'Collection' in collection and item[1] == 'Covert':
                     for exterior in item[2]:
                         cost = 8000
-                        list_of_covert.append((item[0] + f' ({exterior})', cost, 4))
+                        list_of_covert.append((item[0] + f' ({exterior})', cost, 2))
 
                 elif 'Collection' in collection and item[1] == 'Classified':
                     for exterior in item[2]:
                         cost = 3000
-                        list_of_classified.append((item[0] + f' ({exterior})', cost, 6))
+                        list_of_classified.append((item[0] + f' ({exterior})', cost, 5))
 
                 elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
                     for exterior in item[2]:
@@ -178,8 +179,8 @@ def main():
         classified_worker = Thread(target=worker, args=(list_of_classified, 2.5))
         classified_worker.start()
 
-    stickers = list(map(lambda s: (s, 10, 100) if 'Holo' in s else (s, 75, 25),
-                        filter(lambda s: 'Holo' in s or 'Gold' in s, stickers)))
+    stickers = list(map(lambda s: (s, 75, 20) if '(Gold)' in s else (s, 8, 50),
+                        filter(lambda s: '(Holo)' in s or '(Gold)' in s or '(Foil)' in s, stickers)))
     if stickers:
         sticker_worker = Thread(target=worker, args=(stickers, 1))
         sticker_worker.start()
