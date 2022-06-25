@@ -1,0 +1,15 @@
+"★ Skeleton Knife | Marble Fade (Factory New)" 8000 2
+"★ Nomad Knife | Marble Fade (Factory New)" 4000 3
+"★ Paracord Knife | Marble Fade (Factory New)" 4000 3
+"★ Survival Knife | Marble Fade (Factory New)" 3000 3
+"★ Skeleton Knife | Doppler (Factory New)" 8000 2
+"★ Nomad Knife | Doppler (Factory New)" 4000 3
+"★ Paracord Knife | Doppler (Factory New)" 4000 3
+"★ Survival Knife | Doppler (Factory New)" 3000 3
+"★ Skeleton Knife | Tiger Tooth (Factory New)" 8000 2
+"★ Nomad Knife | Tiger Tooth (Factory New)" 3000 3
+"★ Paracord Knife | Tiger Tooth (Factory New)" 3000 3
+"★ Survival Knife | Tiger Tooth (Factory New)" 3000 3
+"★ Skeleton Knife | Damascus Steel (Field-Tested)" 4000 3
+"★ Skeleton Knife | Rust Coat (Field-Tested)" 2000 3
+"★ Skeleton Knife | Ultraviolet (Field-Tested)" 3000 3
