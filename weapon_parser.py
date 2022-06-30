@@ -8,7 +8,6 @@ def new_weapons(current_items: list[str], old_items: list[str], current_names: l
     # current_names = open('current_names.txt', 'r', encoding='utf-8').readlines()
 
     new_items = dict()
-    ti = time.time()
     for num, line in enumerate(current_items):
         s = re.search('"\[.+\]weapon_[a-z|A-Z|0-9|-|_]+"', line.strip())
         if s is not None and line not in old_items and s[0] not in new_items.keys():
@@ -97,44 +96,34 @@ def new_weapons(current_items: list[str], old_items: list[str], current_names: l
         if new_items[item][0] == 'Consumer':
             continue
         tmp = ''
-        id = 0
         tag = 'PaintKit_' + re.search('(?<=\[).+(?=\])', item)[0] + '_Tag'
         floats = []
         for id2, line in enumerate(current_names[::-1]):
             if tag in line:
                 line = line[:line.rfind('"')]
                 tmp = line[line.rfind('"') + 1:]
-                while True:
-                    id2 -= 1
-                    if len(floats) == 2:
-                        break
-                    if '"wear_remap_min"' in current_items[-1 - id2] or '"wear_remap_max"' in current_items[-1 - id2]:
-                        fl = current_items[-1 - id2]
-                        fl = fl[:fl.rfind('"')]
-                        fl = fl[fl.rfind('"') + 1:]
-                        floats.append(float(fl))
                 break
-        if not tmp:
-            for i in current_items:
-                if '"name"\t\t"' + re.search('(?<=\[).+(?=\])', item)[0] + '"' in i:
-                    break
-                id += 1
-            while True:
-                id += 1
-                if id >= len(current_items) or (tmp != '' and len(floats) == 2):
-                    floats.sort()
-                    break
-                if '"description_tag"' in current_items[id]:
-                    tag = re.search('PaintKit.+(?=")', current_items[id])[0]
-                    for line in current_names[::-1]:
-                        if tag in line:
-                            line = line[:line.rfind('"')]
-                            tmp = line[line.rfind('"') + 1:]
-                elif '"wear_remap_min"' in current_items[id] or '"wear_remap_max"' in current_items[id]:
-                    fl = current_items[id]
-                    fl = fl[:fl.rfind('"')]
-                    fl = fl[fl.rfind('"') + 1:]
-                    floats.append(float(fl))
+        id = 0
+        for i in current_items:
+            if '"name"\t\t"' + re.search('(?<=\[).+(?=\])', item)[0] + '"' in i:
+                break
+            id += 1
+        while True:
+            id += 1
+            if id >= len(current_items) or (tmp != '' and len(floats) == 2):
+                floats.sort()
+                break
+            if '"description_tag"' in current_items[id]:
+                tag = re.search('PaintKit.+(?=")', current_items[id])[0]
+                for line in current_names[::-1]:
+                    if tag in line:
+                        line = line[:line.rfind('"')]
+                        tmp = line[line.rfind('"') + 1:]
+            elif '"wear_remap_min"' in current_items[id] or '"wear_remap_max"' in current_items[id]:
+                fl = current_items[id]
+                fl = fl[:fl.rfind('"')]
+                fl = fl[fl.rfind('"') + 1:]
+                floats.append(float(fl))
         exteriors = []
         if floats[1] > 0.45:
             exteriors.append('Battle-Scarred')
@@ -157,6 +146,12 @@ def new_weapons(current_items: list[str], old_items: list[str], current_names: l
             parsed_names[new_items[item][1]].append((tmp, new_items[item][0], exteriors))
 
     if parsed_names:
+        for collection in parsed_names.keys():
+            tmp = []
+            for item in parsed_names[collection]:
+                if item not in tmp:
+                    tmp.append(item)
+            parsed_names[collection] = tmp
         with open("new_weapons.html", "w", encoding='utf-8') as output:
             for collection in parsed_names.keys():
                 output.write(f'<p style="font-size: 30px; text-decoration: none">{collection}</p>')
