@@ -36,7 +36,6 @@ def new_weapons(current_items: list[str], old_items: list[str], current_names: l
                     break
 
     parsed_names = {}
-    i = 0
 
     weapon_types = {
         '"weapon_deagle_prefab"': "Desert Eagle",
@@ -148,6 +147,8 @@ def new_weapons(current_items: list[str], old_items: list[str], current_names: l
         if floats[0] < 0.07:
             exteriors.append('Factory New')
         weapon_string = '"' + item[item.find(']') + 1:-1] + '_prefab"'
+        if weapon_string not in weapon_types.keys():
+            continue
         weapon_type = weapon_types[weapon_string]
         tmp = weapon_type + ' | ' + tmp
         if new_items[item][1] not in parsed_names:
