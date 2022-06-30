@@ -72,7 +72,11 @@ def worker(list_of_items, sleep_rate):
             accept.click()
 
         place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
+        if not place.is_displayed():
+            count[name] = 20
+            continue
         place.click()
+        count[name] += 1
 
         sleep(sleep_rate)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text

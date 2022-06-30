@@ -93,6 +93,9 @@ def worker(list_of_items, mode=0):
             accept.click()
 
         place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
+        if not place.is_displayed():
+            count_map[name] = 20
+            continue
         place.click()
         count_map[name] += 1
 
