@@ -89,7 +89,7 @@ def main():
             driver.refresh()
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        cost = 65
+        cost = 58
         try:
             price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
         except Exception:
@@ -142,7 +142,7 @@ def main():
             for item in new_skins[collection]:
                 if 'Collection' in collection and item[1] == 'Covert':
                     for exterior in item[2]:
-                        cost = 8000
+                        cost = 6000
                         list_of_covert.append((item[0] + f' ({exterior})', cost, 2))
 
                 elif 'Collection' in collection and item[1] == 'Classified':
@@ -153,9 +153,9 @@ def main():
                 elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
                     for exterior in item[2]:
                         if exterior == 'Factory New':
-                            cost = 500
+                            cost = 400
                         elif exterior == 'Minimal Wear':
-                            cost = 200
+                            cost = 150
                         else:
                             cost = 100
                         list_of_covert.append((item[0] + f' ({exterior})', cost, 20))
@@ -163,13 +163,13 @@ def main():
                 elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Classified':
                     for exterior in item[2]:
                         if exterior == 'Factory New':
-                            cost = 400
+                            cost = 200
                         elif exterior == 'Minimal Wear':
-                            cost = 220
+                            cost = 100
                         elif exterior == 'Field-Tested':
-                            cost = 145
+                            cost = 60
                         else:
-                            cost = 75
+                            cost = 50
                         list_of_classified.append((item[0] + f' ({exterior})', cost, 20))
     if list_of_covert:
         covert_worker = Thread(target=worker, args=(list_of_covert, 2.5))
@@ -179,14 +179,14 @@ def main():
         classified_worker = Thread(target=worker, args=(list_of_classified, 2.5))
         classified_worker.start()
 
-    stickers = list(map(lambda s: (s, 75, 20) if '(Gold)' in s else (s, 8, 50),
+    stickers = list(map(lambda s: (s, 60, 20) if '(Gold)' in s else (s, 6, 50),
                         filter(lambda s: '(Holo)' in s or '(Gold)' in s or '(Foil)' in s, stickers)))
     if stickers:
         sticker_worker = Thread(target=worker, args=(stickers, 1))
         sticker_worker.start()
 
     if new_box_name or is_operation:
-        knives_worker = Thread(target=worker, args=(list_of_knives, 3))
+        knives_worker = Thread(target=worker, args=(list_of_knives, 4))
         knives_worker.start()
 
     if stickers:
