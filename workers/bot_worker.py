@@ -16,7 +16,7 @@ def worker(list_of_items, mode=0):
     driver = webdriver.Chrome(binary_yandex_driver_file, options=options)
 
     url = 'https://steamcommunity.com/market/listings/730/Place'
-    game_index = 252490
+    game_index = 730 # 252490
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
 
@@ -53,6 +53,8 @@ def worker(list_of_items, mode=0):
 
         while not bot.is_closed():
             continue
+    elif mode == -1:
+        pass
     else:
         while datetime.now().time().hour != 3:
             sleep(1)
@@ -99,7 +101,7 @@ def worker(list_of_items, mode=0):
         place.click()
         count_map[name] += 1
 
-        sleep(0.4)
+        sleep(1.5)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
             index += 1

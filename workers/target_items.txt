@@ -1,0 +1,4 @@
+"StatTrak™ USP-S | Printstream (Factory New)" 1200 20
+"StatTrak™ USP-S | Printstream (Battle-Scarred)" 700 20
+"StatTrak™ AWP | Chromatic Aberration (Well-Worn)" 700 20
+"StatTrak™ AWP | Chromatic Aberration (Minimal Wear)" 1200 20
