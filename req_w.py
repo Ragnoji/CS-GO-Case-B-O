@@ -78,9 +78,9 @@ def main():
         l1 = [list_of_knives[i] for i in range(len(list_of_knives)) if i % 3 == 0]
         l2 = [list_of_knives[i] for i in range(len(list_of_knives)) if i % 3 == 2]
         l3 = [list_of_knives[i] for i in range(len(list_of_knives)) if i % 3 == 1]
-        k1 = Thread(target=worker, args=(l1, 2))
-        k2 = Thread(target=worker, args=(l2, 2))
-        k3 = Thread(target=worker, args=(l3, 2))
+        k1 = Thread(target=worker, args=(l1, 1))
+        k2 = Thread(target=worker, args=(l2, 1))
+        k3 = Thread(target=worker, args=(l3, 1))
         k1.start()
         sleep(5)
         k2.start()

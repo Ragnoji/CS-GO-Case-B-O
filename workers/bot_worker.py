@@ -70,6 +70,9 @@ def worker(list_of_items, mode=0):
         if count_map[name] == 20:
             count_map[name] = 0
             driver.refresh()
+            while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
+                driver.refresh()
+                sleep(1)
 
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
@@ -101,7 +104,7 @@ def worker(list_of_items, mode=0):
         place.click()
         count_map[name] += 1
 
-        sleep(1.5)
+        sleep(0.35)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
             index += 1

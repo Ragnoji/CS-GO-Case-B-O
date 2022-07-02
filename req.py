@@ -92,7 +92,11 @@ def main():
         if not new_box_name:
             break
         if count == 20:
+            count = 0
             driver.refresh()
+            while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
+                driver.refresh()
+                sleep(1)
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
         cost = 60

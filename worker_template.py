@@ -46,6 +46,9 @@ def worker(list_of_items, sleep_rate):
         if count[name] == 20:
             count[name] = 0
             driver.refresh()
+            while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
+                driver.refresh()
+                sleep(1)
 
         driver.execute_script(console_command)
 

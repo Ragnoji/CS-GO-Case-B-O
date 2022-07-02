@@ -23,7 +23,7 @@ def main():
     require = input('Согласны ли вы с таргетами?\n')
     if require != '':
         return
-    mode = -1  # 0 если нужен бот на нормал скины и 1 если бот на абнормал
+    mode = 0  # 0 если нужен бот на нормал скины и 1 если бот на абнормал
     threads = []
     for i in range(0, len(list_of_items)):
         threads.append(Thread(target=worker, args=([list_of_items[i]], mode)))
