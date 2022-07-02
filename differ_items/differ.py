@@ -235,11 +235,11 @@ def check_case_update_blog(page=1):
             'Operation Riptide Case', 'Glove Case', 'Operation Breakout Weapon Case', 'eSports 2014 Summer Case',
             'Huntsman Weapon Case', 'Winter Offensive Weapon Case', 'CS:GO Weapon Case 3', 'CS:GO Weapon Case 2',
             'CS:GO Weapon Case', 'eSports 2013 Winter Case', 'Operation Hydra Case', 'eSports 2013 Case',
-            'Operation Bravo Case', 'Recoil Case']
+            'Operation Bravo Case']
     if box_name in past:
         return False
     return box_name
 
 
 if __name__ == '__main__':
-    print(check_case_update())
+    print(check_case_update_blog())

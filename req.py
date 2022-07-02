@@ -6,8 +6,6 @@ import pickle
 from datetime import datetime
 from threading import Thread
 from differ_items import differ
-from weapon_parser import new_weapons
-from worker_template import worker
 
 
 def loop_alarm():
@@ -20,6 +18,11 @@ def loop_alarm():
             p.play()
 
 
+case_re = False
+stickers = False
+case_fi = False
+
+
 def main():
     options = webdriver.ChromeOptions()
 
@@ -29,31 +32,27 @@ def main():
 
     url = f'https://steamcommunity.com/market/listings/730/Place'
     driver.get(url)
-    list_of_knives = open('knives_to_parse.txt', 'r', encoding='utf-8')
-    list_of_knives = list_of_knives.readlines()
+    # list_of_knives = open('knives_to_parse.txt', 'r', encoding='utf-8')
+    # list_of_knives = list_of_knives.readlines()
+    #
+    # if not list_of_knives:
+    #     print('create "target_items.txt" file with inputs')
 
-    if not list_of_knives:
-        print('create "target_items.txt" file with inputs')
+    # list_of_knives = [item_line.strip().split() for item_line in list_of_knives]
+    # count_knives = dict()
+    # for i in range(len(list_of_knives)):
+    #     tmp = list_of_knives[i]
+    #     for g, v in enumerate(tmp):
+    #         if v.endswith('"'):
+    #             list_of_knives[i] = [''.join(' '.join(tmp[:g + 1])[1:-1])] + tmp[g + 1:]
+    #             count_knives[list_of_knives[i][0]] = 0
+    # print(*list_of_knives)
+    # if input('Согласны с таргетами?') != '':
+    #     return
 
-    list_of_knives = [item_line.strip().split() for item_line in list_of_knives]
-    count_knives = dict()
-    for i in range(len(list_of_knives)):
-        tmp = list_of_knives[i]
-        for g, v in enumerate(tmp):
-            if v.endswith('"'):
-                list_of_knives[i] = [''.join(' '.join(tmp[:g + 1])[1:-1])] + tmp[g + 1:]
-                count_knives[list_of_knives[i][0]] = 0
-    print(*list_of_knives)
-    if input('Согласны с таргетами?') != '':
-        return
-    driver.get(url)
     for cookie in pickle.load(open('steam_cookies', 'rb')):
         driver.add_cookie(cookie)
     driver.refresh()
-
-    case_re = False
-    stickers = False
-    case_fi = False
 
     def case_blog(fun=differ.check_case_update_blog):
         global case_re
@@ -73,6 +72,8 @@ def main():
     t1.start()
     t2.start()
     while True:
+        global case_re
+        global case_fi
         if case_re:
             new_box_name = case_re
             break
@@ -85,10 +86,6 @@ def main():
     console_command = f'Market_ShowBuyOrderPopup(730, "{new_box_name}", "{new_box_name}")'
     print(f'NEW CASE RELEASE\nCommand for fast buy:\n{console_command}')
     count = 0
-    if new_box_name:
-        print(new_box_name)
-        sleep(60)
-        return
     while True:
         if not new_box_name:
             break
@@ -129,7 +126,7 @@ def main():
             count = 20
             continue
         place.click()
-        sleep(0.45)
+        sleep(0.3)
         count += 1
 
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
