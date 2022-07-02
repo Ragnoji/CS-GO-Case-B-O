@@ -3,6 +3,7 @@ from time import sleep
 from bs4 import BeautifulSoup
 from datetime import datetime
 import urllib3
+from re import search
 
 
 def differ():
@@ -25,6 +26,8 @@ def differ():
             try:
                 sleep(1)
                 response = requests.get(url)
+                if isinstance(response.text, str) and len(response.text) < 1000:
+                    continue
             except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
                 sleep(5)
                 continue
@@ -37,6 +40,8 @@ def differ():
             try:
                 sleep(1)
                 response = requests.get(url_items)
+                if isinstance(response.text, str) and len(response.text) < 1000:
+                    continue
             except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
                 sleep(5)
                 continue
@@ -50,9 +55,12 @@ def differ():
             print(f'{datetime.now().strftime("%H:%M:%S")} | Checking ...', end='')
             while True:
                 try:
+                    sleep(1)
                     response = requests.get(
                         f'https://github.com/SteamDatabase/GameTracking-CSGO/commits/master',
                     )
+                    if isinstance(response.text, str) and len(response.text) < 1000:
+                        continue
                 except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
                     sleep(5)
                     continue
@@ -75,6 +83,8 @@ def differ():
                 try:
                     sleep(1)
                     response = requests.get(url)
+                    if isinstance(response.text, str) and len(response.text) < 1000:
+                        continue
                 except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
                     sleep(5)
                     continue
@@ -89,6 +99,8 @@ def differ():
                 try:
                     sleep(1)
                     response = requests.get(url_items)
+                    if isinstance(response.text, str) and len(response.text) < 1000:
+                        continue
                 except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
                     sleep(5)
                     continue
@@ -166,5 +178,68 @@ def differ():
         return items
 
 
+def check_case_update():
+    past = ['Prisma 2 Case', 'Prisma Case', 'Fracture Case', 'Danger Zone Case', 'Snakebite Case', 'Horizon Case',
+            'CS20 Case', 'Revolver Case', 'Falchion Case', 'Shadow Case', 'Clutch Case', 'Operation Wildfire Case',
+            'Chroma 3 Case', 'Spectrum 2 Case', 'Gamma Case', 'Chroma 2 Case', 'Gamma 2 Case',
+            'Operation Vanguard Weapon Case', 'Spectrum Case', 'Chroma Case', 'Dreams & Nightmares Case',
+            'Operation Phoenix Weapon Case', 'Shattered Web Case', 'Operation Broken Fang Case',
+            'Operation Riptide Case', 'Glove Case', 'Operation Breakout Weapon Case', 'eSports 2014 Summer Case',
+            'Huntsman Weapon Case', 'Winter Offensive Weapon Case', 'CS:GO Weapon Case 3', 'CS:GO Weapon Case 2',
+            'CS:GO Weapon Case', 'eSports 2013 Winter Case', 'Operation Hydra Case', 'eSports 2013 Case',
+            'Operation Bravo Case', 'Recoil Case']
+    box_name = differ()
+    if box_name and 'Case' in box_name[0] and '|' not in box_name[0] and box_name[0] not in past:
+        return box_name[0], box_name[1:]
+    return False, box_name
+
+
+def check_case_update_blog(page=1):
+    response = requests.get(
+        f'https://blog.counter-strike.net/index.php/category/updates/page/{page}/',
+    )
+    recent_post = BeautifulSoup(response.text, features='lxml')
+    recent_post = recent_post.find("div", "inner_post").getText()
+    text = search(r'the .*[A-Z].+Case', recent_post)
+    if not text:
+        text = search(r'The .*[A-Z].+Case', recent_post)
+    box_name = False
+    if text:
+        box_name = text[0]
+        box_name = box_name[:box_name.find('Case') + 4]
+        box_name = box_name.replace('#038;', '')[4:]
+        box_name = box_name.replace(' Weapon', '')
+        box_name = ' '.join(filter(lambda w: w[0].isupper() or w[0].isdigit() or w[0] == '&', box_name.split()))
+        if box_name.find('Operation') != -1:
+            box_name = False
+
+    if not box_name:
+        text = search(r'the .*[A-Z].+Collection', recent_post)
+        if not text:
+            text = search(r'The .*[A-Z].+Collection', recent_post)
+        box_name = False
+        if text:
+            box_name = text[0]
+            box_name = box_name[:box_name.find('Collection') - 1]
+            box_name += ' Case'
+            box_name = box_name.replace('#038;', '')[4:]
+            box_name = box_name.replace(' Weapon', '')
+            box_name = ' '.join(filter(lambda w: w[0].isupper() or w[0].isdigit() or w[0] == '&', box_name.split()))
+            if box_name.find('Operation') != -1:
+                box_name = False
+    past = ['Prisma 2 Case', 'Prisma Case', 'Fracture Case', 'Danger Zone Case', 'Snakebite Case', 'Horizon Case',
+            'CS20 Case', 'Revolver Case', 'Falchion Case', 'Shadow Case', 'Clutch Case', 'Operation Wildfire Case',
+            'Chroma 3 Case', 'Spectrum 2 Case', 'Gamma Case', 'Chroma 2 Case', 'Gamma 2 Case',
+            'Operation Vanguard Weapon Case', 'Spectrum Case', 'Chroma Case', 'Dreams & Nightmares Case',
+            'Operation Phoenix Weapon Case', 'Shattered Web Case', 'Operation Broken Fang Case',
+            'Operation Riptide Case', 'Glove Case', 'Operation Breakout Weapon Case', 'eSports 2014 Summer Case',
+            'Huntsman Weapon Case', 'Winter Offensive Weapon Case', 'CS:GO Weapon Case 3', 'CS:GO Weapon Case 2',
+            'CS:GO Weapon Case', 'eSports 2013 Winter Case', 'Operation Hydra Case', 'eSports 2013 Case',
+            'Operation Bravo Case', 'Recoil Case']
+    if box_name in past:
+        return False
+    return box_name
+
+
 if __name__ == '__main__':
-    differ()
+    print(check_case_update())
