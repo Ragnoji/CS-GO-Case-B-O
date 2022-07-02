@@ -6,6 +6,7 @@ import pickle
 from datetime import datetime
 from threading import Thread
 from differ_items import differ
+from worker_template import worker
 
 
 def loop_alarm():
@@ -74,10 +75,11 @@ def main():
     while True:
         global case_re
         global case_fi
+        global stickers
         if case_re:
             new_box_name = case_re
             break
-        if case_fi:
+        if case_fi or stickers:
             new_box_name = case_fi
             break
 
@@ -192,19 +194,26 @@ def main():
     # if list_of_classified:
     #     classified_worker = Thread(target=worker, args=(list_of_classified, 2.5))
     #     classified_worker.start()
+    global stickers
+    if isinstance(stickers, list):
+        stickers = list(map(lambda s: (s, 60, 20) if '(Gold)' in s else (s, 4, 50),
+                            filter(lambda s: isinstance(s, str) and ('(Holo)' in s or '(Gold)' in s or '(Foil)' in s), stickers)))
+    sticker_workers = []
+    if stickers:
+        gold_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Gold)' in s[0]], 1))
+        foil_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Foil)' in s[0]], 1))
+        holo_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Holo)' in s[0]], 1))
+        sticker_workers = [gold_sticker_worker, foil_sticker_worker, holo_sticker_worker]
+        for s_w in sticker_workers:
+            s_w.start()
+            sleep(10)
 
-    # stickers = list(map(lambda s: (s, 60, 20) if '(Gold)' in s else (s, 6, 50),
-    #                     filter(lambda s: '(Holo)' in s or '(Gold)' in s or '(Foil)' in s, stickers)))
-    # if stickers:
-    #     sticker_worker = Thread(target=worker, args=(stickers, 1))
-    #     sticker_worker.start()
-    #
     # if new_box_name or is_operation:
     #     knives_worker = Thread(target=worker, args=(list_of_knives, 4))
     #     knives_worker.start()
 
-    # if stickers:
-    #     sticker_worker.join()
+    for s_w in sticker_workers:
+        s_w.join()
     # if new_box_name or is_operation:
     #     knives_worker.join()
     # if list_of_covert:
