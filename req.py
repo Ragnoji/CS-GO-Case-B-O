@@ -59,6 +59,7 @@ def main():
         global case_re
         case_re = fun()
         while case_re is False:
+            sleep(3)
             case_re = fun()
 
     def case_commits(fun=differ.check_case_update):
