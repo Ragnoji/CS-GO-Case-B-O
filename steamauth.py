@@ -40,6 +40,7 @@ def cookie_gen():
         time.sleep(8)
         pickle.dump(driver.get_cookies(), open('steam_cookies', 'wb'))
         pickle.dump(driver.get_cookies(), open('workers/steam_cookies', 'wb'))
+        pickle.dump(driver.get_cookies(), open('word_parse/steam_cookies', 'wb'))
 
     except Exception as ex:
         print(ex)

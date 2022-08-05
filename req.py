@@ -3,10 +3,15 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import vlc
 import pickle
+import requests
 from datetime import datetime
 from threading import Thread
 from differ_items import differ
 from worker_template import worker
+from weapon_parser import new_weapons
+import os
+from dotenv import load_dotenv
+import telebot
 
 
 def loop_alarm():
@@ -22,6 +27,7 @@ def loop_alarm():
 case_re = False
 stickers = False
 case_fi = False
+new_skins = False
 
 
 def main():
@@ -32,7 +38,29 @@ def main():
     driver = webdriver.Chrome(binary_yandex_driver_file, options=options)
 
     url = f'https://steamcommunity.com/market/listings/730/Place'
+    load_dotenv()
+    token = os.getenv('AUTH_TOKEN')
+    bot = telebot.TeleBot(token)
+    steam_m = os.getenv('STEAM_AUTH_MAIN')
+    steam_r = os.getenv('STEAM_REMEMBER_MAIN')
+    headers = {'Host': 'steamcommunity.com',
+               'Origin': 'https://steamcommunity.com',
+               'Referer': 'https://steamcommunity.com/market', 'Connection': 'keep-alive',
+               'Accept-Language': 'en;q=0.9,zh;q=0.8', 'Accept-Encoding': 'gzip, deflate, br',
+               'Accept': '*/*',
+               'User-Agent': 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.134 YaBrowser/22.7.1.806 Yowser/2.5 Safari/537.36',
+               'Cookie': f'{steam_m};{steam_r};steamCurrencyId=5'
+               }
+    session = requests.session()
+    session.headers.update(headers)
+    session.get('https://steamcommunity.com/market/')
     driver.get(url)
+    for c in session.cookies:
+        driver.add_cookie({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
+    while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
+        driver.refresh()
+        sleep(2)
+    session.close()
     # list_of_knives = open('knives_to_parse.txt', 'r', encoding='utf-8')
     # list_of_knives = list_of_knives.readlines()
     #
@@ -51,10 +79,6 @@ def main():
     # if input('Согласны с таргетами?') != '':
     #     return
 
-    for cookie in pickle.load(open('steam_cookies', 'rb')):
-        driver.add_cookie(cookie)
-    driver.refresh()
-
     def case_blog(fun=differ.check_case_update_blog):
         global case_re
         case_re = fun()
@@ -65,24 +89,47 @@ def main():
     def case_commits(fun=differ.check_case_update):
         global case_fi
         global stickers
+        global new_skins
         case_fi, stickers = fun()
-        while case_fi is False and stickers is False:
+        current_items = open('current_items.txt', 'r', encoding='utf-8').readlines()
+        old_items = open('old_items.txt', 'r', encoding='utf-8').readlines()
+        current_names = open('current_names.txt', 'r', encoding='utf-8').readlines()
+        new_skins = new_weapons(current_items, old_items, current_names)
+        while case_fi is False and stickers is False and not new_skins:
             case_fi, stickers = fun()
+            current_items = open('current_items.txt', 'r', encoding='utf-8').readlines()
+            old_items = open('old_items.txt', 'r', encoding='utf-8').readlines()
+            current_names = open('current_names.txt', 'r', encoding='utf-8').readlines()
+            new_skins = new_weapons(current_items, old_items, current_names)
 
     t1 = Thread(target=case_blog)
     t2 = Thread(target=case_commits)
     t1.start()
     t2.start()
     while True:
+        sleep(5)
         global case_re
         global case_fi
         global stickers
+        global new_skins
         if case_re:
             new_box_name = case_re
+            Thread(target=loop_alarm).start()
+            bot.send_message(852738955, "Новые кейс в CS:GO")
             break
-        if case_fi or stickers:
+        if case_fi:
             new_box_name = case_fi
+            Thread(target=loop_alarm).start()
+            bot.send_message(852738955, "Новый кейс в CS:GO")
             break
+        if stickers:
+            Thread(target=loop_alarm).start()
+            bot.send_message(852738955, "Новые стикеры в CS:GO")
+            break
+        if new_skins:
+            print('New skins without case')
+            Thread(target=loop_alarm).start()
+            bot.send_message(852738955, "Новые скины без кейса в CS:GO")
 
     driver.refresh()
     Thread(target=loop_alarm).start()
@@ -100,7 +147,7 @@ def main():
                 sleep(1)
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        cost = 60
+        cost = 70
         try:
             price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
         except Exception:
@@ -108,10 +155,16 @@ def main():
                 message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | слетела кука или баганула страница\n'
                 logg.write(message)
                 print(message)
+            session = requests.session()
+            session.headers.update(headers)
+            session.get('https://steamcommunity.com/market/')
             driver.get(url)
-            for cookie in pickle.load(open('steam_cookies', 'rb')):
-                driver.add_cookie(cookie)
-            driver.refresh()
+            for c in session.cookies:
+                driver.add_cookie({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
+            while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
+                driver.refresh()
+                sleep(2)
+            session.close()
             driver.execute_script(console_command)
             price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
             price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
@@ -199,19 +252,31 @@ def main():
     # if list_of_classified:
     #     classified_worker = Thread(target=worker, args=(list_of_classified, 2.5))
     #     classified_worker.start()
-    global stickers
     if isinstance(stickers, list):
-        stickers = list(map(lambda s: (s, 60, 20) if '(Gold)' in s else (s, 4, 50),
-                            filter(lambda s: isinstance(s, str) and ('(Holo)' in s or '(Gold)' in s or '(Foil)' in s), stickers)))
+
+        def sticker_map(s):
+            if '(Gold)' in s:
+                return s, 80, 10
+            elif '(Foil)' in s:
+                return s, 40, 30
+            elif '(Holo)' in s:
+                return s, 14, 100
+            else:
+                return s, 2, 200
+
+        stickers = list(map(lambda s: sticker_map(s), stickers))
+                            # filter(lambda s: isinstance(s, str) and ('(Holo)' in s or '(Gold)' in s or '(Foil)' in s),
+                            #        stickers)))
     sticker_workers = []
     if stickers:
         gold_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Gold)' in s[0]], 1))
-        foil_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Foil)' in s[0]], 1))
-        holo_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Holo)' in s[0]], 1))
-        sticker_workers = [gold_sticker_worker, foil_sticker_worker, holo_sticker_worker]
-        for s_w in sticker_workers:
+        foil_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Foil)' in s[0]], 0.4))
+        holo_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Holo)' in s[0]], 0.4))
+        paper_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(' not in s[0] and ')' not in s[0]], 0.4))
+        sticker_workers = [gold_sticker_worker, foil_sticker_worker, holo_sticker_worker, paper_sticker_worker]
+        for s_w in sticker_workers[::-1]:
             s_w.start()
-            sleep(10)
+            sleep(6)
 
     # if new_box_name or is_operation:
     #     knives_worker = Thread(target=worker, args=(list_of_knives, 4))

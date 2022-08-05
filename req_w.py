@@ -4,6 +4,9 @@ import pickle
 from threading import Thread
 from weapon_parser import new_weapons
 from worker_template import worker
+import os
+from dotenv import load_dotenv
+import requests
 
 
 def main():
@@ -32,9 +35,23 @@ def main():
     print(*list_of_knives)
     if input('Согласны с таргетами?') != '':
         return
+    load_dotenv()
+    steam_m = os.getenv('STEAM_AUTH_MAIN')
+    steam_r = os.getenv('STEAM_REMEMBER_MAIN')
+    headers = {'Host': 'steamcommunity.com',
+               'Origin': 'https://steamcommunity.com',
+               'Referer': 'https://steamcommunity.com/market', 'Connection': 'keep-alive',
+               'Accept-Language': 'en;q=0.9,zh;q=0.8', 'Accept-Encoding': 'gzip, deflate, br',
+               'Accept': '*/*',
+               'User-Agent': 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.134 YaBrowser/22.7.1.806 Yowser/2.5 Safari/537.36',
+               'Cookie': f'{steam_m};{steam_r};steamCurrencyId=5'
+               }
+    session = requests.session()
+    session.headers.update(headers)
+    session.get('https://steamcommunity.com/market/')
     driver.get(url)
-    for cookie in pickle.load(open('steam_cookies', 'rb')):
-        driver.add_cookie(cookie)
+    for c in session.cookies:
+        driver.add_cookie({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
     driver.refresh()
 
     current_items = open('current_items.txt', 'r', encoding='utf-8').readlines()
@@ -55,14 +72,14 @@ def main():
                 elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
                     for exterior in item[2]:
                         if exterior == 'Factory New':
-                            cost = 500
+                            cost = 700
                         elif exterior == 'Minimal Wear':
-                            cost = 200
+                            cost = 400
                         elif exterior == 'Field-Tested':
-                            cost = 100
+                            cost = 250
                         else:
                             continue
-                        list_of_covert.append((item[0] + f' ({exterior})', cost, 10))
+                        list_of_covert.append((item[0] + f' ({exterior})', cost, 6))
                         # list_of_covert_stat.append(('StatTrak™ ' + item[0] + f' ({exterior})', cost*2, 10))
 
     covert_workers = []

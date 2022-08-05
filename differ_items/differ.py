@@ -51,7 +51,7 @@ def differ():
         old_file = open('old_names.txt', 'r', encoding='utf-8')
         print('Starting commit -', old_id)
         while True:
-            sleep(2)
+            sleep(3)
             print(f'{datetime.now().strftime("%H:%M:%S")} | Checking ...', end='')
             while True:
                 try:
@@ -60,13 +60,13 @@ def differ():
                         f'https://github.com/SteamDatabase/GameTracking-CSGO/commits/master',
                     )
                     if isinstance(response.text, str) and len(response.text) < 1000:
+                        print('here')
                         continue
                 except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
-                    sleep(5)
+                    sleep(2)
                     continue
                 break
 
-            sleep(3)
             old_data = BeautifulSoup(response.text, features='lxml')
             current_id = old_data.find("a", "tooltipped tooltipped-sw btn-outline btn BtnGroup-item text-mono f6").getText().strip()
             if current_id != old_id:

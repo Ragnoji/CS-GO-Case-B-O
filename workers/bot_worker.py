@@ -1,14 +1,16 @@
 import asyncio
-
 from selenium import webdriver
 import pickle
+import requests
 from time import sleep, time
 from selenium.webdriver.common.keys import Keys
 from datetime import datetime
 from discord.ext import commands
+import os
+from dotenv import load_dotenv
 
 
-def worker(list_of_items, mode=0):
+def worker(list_of_items, game_index, mode=0, delay=0):
     options = webdriver.ChromeOptions()
 
     binary_yandex_driver_file = 'yandexdriver.exe'
@@ -16,14 +18,31 @@ def worker(list_of_items, mode=0):
     driver = webdriver.Chrome(binary_yandex_driver_file, options=options)
 
     url = 'https://steamcommunity.com/market/listings/730/Place'
-    game_index = 730 # 252490
+    # game_index = 252490
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
 
+    load_dotenv()
+    steam_m = os.getenv('STEAM_AUTH_MAIN')
+    steam_r = os.getenv('STEAM_REMEMBER_MAIN')
+    headers = {'Host': 'steamcommunity.com',
+               'Origin': 'https://steamcommunity.com',
+               'Referer': 'https://steamcommunity.com/market', 'Connection': 'keep-alive',
+               'Accept-Language': 'en;q=0.9,zh;q=0.8', 'Accept-Encoding': 'gzip, deflate, br',
+               'Accept': '*/*',
+               'User-Agent': 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.134 YaBrowser/22.7.1.806 Yowser/2.5 Safari/537.36',
+               'Cookie': f'{steam_m};{steam_r};steamCurrencyId=5'
+               }
+    session = requests.session()
+    session.headers.update(headers)
+    session.get('https://steamcommunity.com/market/')
     driver.get(url)
-    for cookie in pickle.load(open('steam_cookies', 'rb')):
-        driver.add_cookie(cookie)
-    driver.refresh()
+    for c in session.cookies:
+        driver.add_cookie({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
+    while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
+        driver.refresh()
+        sleep(2)
+    session.close()
 
     list_of_tabs = [driver.current_window_handle]
     count_map = {list_of_items[0][0]: 0}
@@ -31,6 +50,9 @@ def worker(list_of_items, mode=0):
         count_map[item[0]] = 0
         sleep(1)
         driver.execute_script(f'window.open("{url}")')
+        while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
+            driver.refresh()
+            sleep(2)
         sleep(1)
         for w in driver.window_handles:
             if w not in list_of_tabs:
@@ -53,14 +75,19 @@ def worker(list_of_items, mode=0):
 
         while not bot.is_closed():
             continue
+        sleep(delay * 0.2)
     elif mode == -1:
         pass
     else:
-        while datetime.now().time().hour != 3:
-            sleep(1)
+        while datetime.now().time().hour != 23 or datetime.now().time().minute != 15 or datetime.now().time().second != 59:
+            sleep(0.1)
+        sleep(delay * 0.2)
 
     index = 0
+    t0 = time()
     while list_of_items:
+        print(time() - t0)
+        t0 = time()
         item = list_of_items[index]
         name = item[0]
         cost = item[1]
@@ -70,9 +97,10 @@ def worker(list_of_items, mode=0):
         if count_map[name] == 20:
             count_map[name] = 0
             driver.refresh()
-            while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
-                driver.refresh()
-                sleep(1)
+
+        while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
+            driver.refresh()
+            sleep(1)
 
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
@@ -83,8 +111,13 @@ def worker(list_of_items, mode=0):
                 message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | слетела кука или баганула страница\n'
                 logg.write(message)
             driver.get(url)
-            for cookie in pickle.load(open('steam_cookies', 'rb')):
-                driver.add_cookie(cookie)
+            session = requests.session()
+            session.headers.update(headers)
+            session.get('https://steamcommunity.com/market/')
+            driver.get(url)
+            for c in session.cookies:
+                driver.add_cookie({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
+            session.close()
             driver.refresh()
             driver.execute_script(console_command)
             price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
@@ -104,7 +137,7 @@ def worker(list_of_items, mode=0):
         place.click()
         count_map[name] += 1
 
-        sleep(0.35)
+        sleep(0.4)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
             index += 1
