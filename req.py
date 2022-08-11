@@ -1,5 +1,4 @@
 from time import sleep
-from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import vlc
 import pickle
@@ -12,6 +11,7 @@ from weapon_parser import new_weapons
 import os
 from dotenv import load_dotenv
 import telebot
+from selenium import webdriver
 
 
 def loop_alarm():
@@ -31,11 +31,15 @@ new_skins = False
 
 
 def main():
-    options = webdriver.ChromeOptions()
-
-    binary_yandex_driver_file = 'yandexdriver.exe'
-
-    driver = webdriver.Chrome(binary_yandex_driver_file, options=options)
+    options = {
+        'proxy': {
+            'http': 'http://user58497:nx0yrs@193.160.211.84:1443',
+            'https': 'https://user58497:nx0yrs@193.160.211.84:1443',
+            'no_proxy': 'localhost,127.0.0.1'
+        }
+    }
+    c_options = webdriver.ChromeOptions()
+    driver = webdriver.Chrome("yandexdriver.exe", options=c_options)
 
     url = f'https://steamcommunity.com/market/listings/730/Place'
     load_dotenv()

@@ -23,8 +23,8 @@ def main():
     print(*list_of_items)
     game_index = 252490
     webdriver = True
-    mode = 1  # 0 если нужен бот на нормал скины и 1 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
-    parallel = False  # Регулировка режима запуска воркеров
+    mode = 0  # 0 если нужен бот на нормал скины и 1 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
+    parallel = True  # Регулировка режима запуска воркеров
     require = input(f'Согласны ли вы с таргетами и параметрами:\nwebdriver = {webdriver}\ngame_index = {game_index}\nmode = {mode}\nparallel = {parallel}\n')
     if require != '':
         return
@@ -40,13 +40,15 @@ def main():
             else:
                 sleep(0.1)
     else:
-        splited_lists = [[], []]
-        for i, item in enumerate(list_of_items):
-            splited_lists[i % 2].append(item)
-        for i, s_l in enumerate(splited_lists):
-            if s_l:
-                threads.append(Thread(target=selected_worker, args=(s_l, game_index, mode, i)))
-                threads[-1].start()
+        # splited_lists = [[], []]
+        # for i, item in enumerate(list_of_items):
+        #     splited_lists[i % 2].append(item)
+        # for i, s_l in enumerate(splited_lists):
+        #     if s_l:
+        #         threads.append(Thread(target=selected_worker, args=(s_l, game_index, mode, i)))
+        #         threads[-1].start()
+        threads.append(Thread(target=selected_worker, args=(list_of_items, game_index, mode)))
+        threads[-1].start()
 
     sleep(3)
     for t in threads:

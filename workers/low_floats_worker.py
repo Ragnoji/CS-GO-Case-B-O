@@ -1,4 +1,5 @@
 import requests
+import requests.adapters
 import re
 import datetime
 from time import sleep
@@ -11,11 +12,11 @@ from dotenv import load_dotenv
 
 
 def listings_worker(list_of_items):
-    load_dotenv()
     # credentials = {
     #     'sessionid': '847ce3b4942e55e812f7e115', 'currency': '5', 'appid': '730', 'market_hash_name': 'Chroma Case',
     #     'price_total': '100', 'quantity': '1', 'billing_state': '', 'save_my_address': '0',
     # }
+    load_dotenv()
     steam_m = os.getenv('STEAM_AUTH_PARSER')
     steam_r = os.getenv('STEAM_REMEMBER_PARSER')
     headers = {'Host': 'steamcommunity.com',
@@ -29,9 +30,22 @@ def listings_worker(list_of_items):
 
     float_url = 'https://api.csgofloat.com/'
     item_url = 'https://steamcommunity.com/market/listings/730/'
+    proxy = {'https': 'socks5://user58497:nx0yrs@193.160.211.84:11443',
+             'http': 'socks5://user58497:nx0yrs@193.160.211.84:11443'}
+    use_proxy = False
     session = requests.session()
+    adapter = requests.adapters.HTTPAdapter(max_retries=2)
+    session.mount('https://', adapter)
+    session.mount('http://', adapter)
     session.headers.update(headers)
-    session.get('https://steamcommunity.com/market/')
+    if use_proxy:
+        session.proxies.update(proxy)
+    while True:
+        try:
+            session.get('https://steamcommunity.com/market/')
+            break
+        except requests.ConnectionError:
+            continue
     query_settings = '?query=&start=0&count=100&country=RU&language=english&currency=5'
     item_cache = dict()
     if os.path.isfile('item_cache'):
@@ -47,9 +61,19 @@ def listings_worker(list_of_items):
                 item_cache[item[0]] = []
             if len(item) == 2:
                 float_cap = item[1]
+            if len(item) == 3:
+                float_cap = item[1]
+                top_price = item[2]
             item = item[0]
             # driver.get(item_url + item + query_settings)
-            resp = session.get(item_url + item + query_settings, headers=headers)
+            if use_proxy:
+                session.proxies.update(proxy)
+            while True:
+                try:
+                    resp = session.get(item_url + item + query_settings, headers=headers)
+                    break
+                except requests.ConnectionError:
+                    continue
             resp = resp.text
             with open('OUTPUT.html', 'w', encoding='utf-8') as o:
                 o.write(resp)
@@ -59,8 +83,16 @@ def listings_worker(list_of_items):
             k = 0
             while (not r or not prices) and k < 2:
                 print('!')
-                sleep(5)
-                resp = session.get(item_url + item + query_settings, headers=headers)
+                sleep(5.5)
+                if use_proxy:
+                    session.proxies.update(proxy)
+
+                while True:
+                    try:
+                        resp = session.get(item_url + item + query_settings, headers=headers)
+                        break
+                    except requests.ConnectionError:
+                        continue
                 resp = resp.text
                 with open('OUTPUT.html', 'w', encoding='utf-8') as o:
                     o.write(resp)
@@ -68,14 +100,33 @@ def listings_worker(list_of_items):
                 r = re.findall(r'var g_rgAssets = \{.*\}', resp)
                 prices = re.findall(r'var g_rgListingInfo = \{.*\}', resp)
                 k += 1
-            if k == 3:
+            if k == 2:
                 print('!!!')
                 continue
+            while (not r or not prices) or ('converted_price' not in list(json.loads(prices[0][22:]).items())[0][1].keys()):
+                print('?')
+                sleep(5.5)
+                if use_proxy:
+                    session.proxies.update(proxy)
+                while True:
+                    try:
+                        resp = session.get(item_url + item + query_settings, headers=headers)
+                        break
+                    except requests.ConnectionError:
+                        continue
+                resp = resp.text
+                with open('OUTPUT.html', 'w', encoding='utf-8') as o:
+                    o.write(resp)
+                soup = BeautifulSoup(resp, "html.parser")
+                r = re.findall(r'var g_rgAssets = \{.*\}', resp)
+                prices = re.findall(r'var g_rgListingInfo = \{.*\}', resp)
+                k += 1
+            
             prices = json.loads(prices[0][22:])
             for p in prices.keys():
                 if prices[p]['fee'] == 0 or 'converted_price' not in prices[p].keys():
                     continue
-                prices[p] = (prices[p]['converted_price'] + prices[p]['converted_fee']) / 100
+                prices[p] = int((prices[p]['converted_price'] + prices[p]['converted_fee']) // 100)
             buttons = soup.find_all("a", {"class": "item_market_action_button btn_green_white_innerfade btn_small"})
             context_market = dict()
             for b in buttons:
@@ -97,7 +148,20 @@ def listings_worker(list_of_items):
                     item_cache[item].append(listing)
                     item_data = listings[listing]
                     link = f"{float_url}?url={item_data['actions'][0]['link'].replace('%assetid%', listing)}"
-                    resp2 = requests.get(link)
+                    if use_proxy:
+                        while True:
+                            try:
+                                resp2 = requests.get(link, proxies=proxy)
+                                break
+                            except requests.ConnectionError:
+                                continue
+                    else:
+                        while True:
+                            try:
+                                resp2 = requests.get(link)
+                                break
+                            except requests.ConnectionError:
+                                continue
                     while True:
                         try:
                             resp2 = resp2.json()
@@ -107,29 +171,37 @@ def listings_worker(list_of_items):
                             continue
                         break
                     if resp2:
-                        this_price = context_market[listing][0]
-                        if not float_cap or (float_cap and resp2['iteminfo']['floatvalue'] < float_cap):
-                            to_print.append(f"FV: {resp2['iteminfo']['floatvalue']} | {this_price} руб. {'{:.2f}'.format(this_price / cheapest_price * 100)}%")
+                        if listing in context_market.keys():
+                            this_price = context_market[listing][0]
+                        else:
+                            this_price = '0'
+                        if not isinstance(this_price, int) or not isinstance(cheapest_price, int):
+                            print(prices)
+                            this_price = '0'
+                            cheapest_price = '0'
+                        if float_cap and float(resp2['iteminfo']['floatvalue']) > float_cap:
+                            continue
+                        if this_price != '0' and this_price > top_price:
+                            continue
+                        to_print.append(f"FV: {resp2['iteminfo']['floatvalue']} | {this_price} руб. {'{:.2f}'.format(this_price / cheapest_price * 100) if this_price != '0' else '?'}%")
             print(f"{new_items} new items for {item}")
             if to_print:
                 print(f"Cheapest price | {cheapest_price}")
                 print('\n'.join(to_print))
-                bot.send_message(852738955, f"{item} | {cheapest_price}\n" + '\n'.join(to_print))
-            sleep(5)
+                bot.send_message(852738955, f"{item} | {cheapest_price} руб.\n" + '\n'.join(to_print))
+            sleep(5.5)
         print(f'{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | sleeping 4.0 sec')
         with open('item_cache', 'wb') as ch:
             pickle.dump(item_cache, ch)
-        sleep(5)
+        sleep(5.5)
 
 
-items = [('★ Sport Gloves | Nocts (Field-Tested)', 0.18), ('★ Sport Gloves | Slingshot (Field-Tested)', 0.18),
-         ('★ Specialist Gloves | Lt. Commander (Field-Tested)', 0.18), ('★ Sport Gloves | Scarlet Shamagh (Field-Tested)', 0.18),
-         ('★ Specialist Gloves | Tiger Strike (Field-Tested)', 0.18), ('★ Driver Gloves | King Snake (Field-Tested)', 0.18),
-         ('★ Driver Gloves | Imperial Plaid (Field-Tested)', 0.18),
-         ('★ Sport Gloves | Omega (Field-Tested)', 0.18), ('★ Sport Gloves | Amphibious (Field-Tested)', 0.18),
-         ('★ Specialist Gloves | Field Agent (Field-Tested)', 0.18),
-         ('★ Moto Gloves | Blood Pressure (Field-Tested)', 0.18),
-         ('★ Moto Gloves | Finish Line (Field-Tested)', 0.18), ('★ Moto Gloves | Smoke Out (Field-Tested)', 0.18),
-         ('★ Driver Gloves | Black Tie (Field-Tested)', 0.18), ('★ Driver Gloves | Snow Leopard (Field-Tested)', 0.18),
+items = [('★ Sport Gloves | Nocts (Field-Tested)', 0.18, 27000), ('★ Sport Gloves | Slingshot (Field-Tested)', 0.18, 60000),
+         ('★ Sport Gloves | Scarlet Shamagh (Field-Tested)', 0.18, 24000),
+         ('★ Specialist Gloves | Tiger Strike (Field-Tested)', 0.18, 67000),
+         ('★ Specialist Gloves | Field Agent (Field-Tested)', 0.18, 40000),
+         ('★ Moto Gloves | Blood Pressure (Field-Tested)', 0.18, 15000),
+         ('★ Moto Gloves | Finish Line (Field-Tested)', 0.18, 18300), ('★ Moto Gloves | Smoke Out (Field-Tested)', 0.18, 21350),
+         ('★ Driver Gloves | Black Tie (Field-Tested)', 0.18, 21000), ('★ Driver Gloves | Snow Leopard (Field-Tested)', 0.18, 56000),
 ]
 listings_worker(items)

@@ -2,7 +2,8 @@ import asyncio
 from selenium import webdriver
 import pickle
 import requests
-from time import sleep, time
+from time import sleep
+from time import perf_counter as time
 from selenium.webdriver.common.keys import Keys
 from datetime import datetime
 from discord.ext import commands
@@ -75,19 +76,16 @@ def worker(list_of_items, game_index, mode=0, delay=0):
 
         while not bot.is_closed():
             continue
-        sleep(delay * 0.2)
+        sleep(delay * 0.01)
     elif mode == -1:
         pass
     else:
-        while datetime.now().time().hour != 23 or datetime.now().time().minute != 15 or datetime.now().time().second != 59:
-            sleep(0.1)
-        sleep(delay * 0.2)
+        while datetime.now().hour != 3 or datetime.now().microsecond / 1000000 < 0.3:
+            continue
+        sleep(0.01 * delay)
 
     index = 0
-    t0 = time()
     while list_of_items:
-        print(time() - t0)
-        t0 = time()
         item = list_of_items[index]
         name = item[0]
         cost = item[1]
@@ -105,6 +103,7 @@ def worker(list_of_items, game_index, mode=0, delay=0):
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
         try:
+            price.clear()
             price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
         except Exception:
             with open('log.txt', 'a', encoding='utf-8') as logg:
@@ -137,7 +136,7 @@ def worker(list_of_items, game_index, mode=0, delay=0):
         place.click()
         count_map[name] += 1
 
-        sleep(0.4)
+        sleep(0.25)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
             index += 1
