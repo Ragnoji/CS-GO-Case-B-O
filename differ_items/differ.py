@@ -1,5 +1,5 @@
 import requests
-from time import sleep
+from time import sleep, perf_counter
 from bs4 import BeautifulSoup
 from datetime import datetime
 import urllib3
@@ -72,11 +72,14 @@ def differ():
             if current_id != old_id:
                 old_id = current_id
                 print(f'\n{datetime.now().strftime("%H:%M:%S")} | {old_id}')
+                print('sleeping 15 seconds')
+                sleep(15)
                 break
             else:
                 print(f'Nothing new ({current_id})')
 
         old_lines = old_file.readlines()
+        url = f'https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/{current_id}/csgo/resource/csgo_english.txt'
         for _ in range(1):
             current_names = open('current_names.txt', 'w', encoding='utf-8')
             while True:
@@ -95,6 +98,7 @@ def differ():
             current_names = current_names.readlines()
 
             current_items = open('current_items.txt', 'w', encoding='utf-8')
+            url_items = f'https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/{current_id}/csgo/scripts/items/items_game.txt'
             while True:
                 try:
                     sleep(1)
@@ -107,8 +111,12 @@ def differ():
                 break
             current_items.write(response.text)
             current_items.close()
+            current_items = open('current_items.txt', 'r', encoding='utf-8').readlines()
 
             items = []
+            stickers_count = 0
+            sticker_map = dict()
+            t0 = perf_counter()
             for line in current_names:
                 if line in old_lines:
                     continue
@@ -117,12 +125,38 @@ def differ():
                     li = line[:ri].rfind('"')
                     lli = line[:li].find('"')
                     rri = line[:li].rfind('"')
-                    if ('CSGO_crate_community' not in line[lli + 1:rri] and 'StickerKit' not in line[lli + 1:rri]) or 'desc' in line[lli + 1:rri]:
+                    item_tag = line[lli + 1:rri]
+                    if ('CSGO_crate_community' not in item_tag and 'StickerKit' not in item_tag) or 'desc' in item_tag:
                         continue
-                    if 'CSGO_crate_community' in line[lli + 1:rri]:
-                        items.insert(0, f'{line[li + 1:ri]}')
-                    else:
-                        items.append(f'Sticker | {line[li + 1:ri]}')
+                    if 'CSGO_crate_community' in item_tag:
+                        items.insert(0, [f'{line[li + 1:ri]}', 'Case'])
+                    elif 'StickerKit' in item_tag and 'signature' not in item_tag:
+                        stickers_count += 1
+                        sticker_map[item_tag] = f'Sticker | {line[li + 1:ri]}'
+                        items.append(item_tag)
+
+            last_rarity = ''
+            rarities = {'ancient': 'Covert', 'legendary': 'Classified', 'mythical': 'Restricted',
+                        'rare': 'Mil-Spec', 'uncommon': 'Industrial', 'common': 'Consumer',
+                        }
+            rarities_values = {
+                'Consumer': 0, 'Industrial': 1, 'Mil-Spec': 2, 'Restricted': 3, 'Classified': 4, 'Covert': 5
+            }
+            for line in current_items[::-1]:
+                if stickers_count == 0:
+                    break
+                if line.count('"') == 4:
+                    ri = line.rindex('"')
+                    li = line[:ri].rfind('"')
+                    lli = line[:li].find('"')
+                    rri = line[:li].rfind('"')
+                    line_name = line[lli + 1:rri]
+                    if line_name == 'item_rarity':
+                        last_rarity = line[li + 1:ri]
+                        continue
+                    if line_name == 'item_name' and line[li + 2:ri] in items:
+                        stickers_count -= 1
+                        items[items.index(line[li + 2:ri])] = [sticker_map[line[li + 2:ri]], rarities[last_rarity]]
             if items:
                 break
 
@@ -130,7 +164,8 @@ def differ():
             output.write('')
             return items
         ind = 0
-        while 'Case' in items[ind] and '|' not in items[ind]:
+
+        while 'Case' in items[ind][1]:
             output.write(f'<p><a href="https://steamcommunity.com/market/listings/730/{items[ind]}">{items[ind]}\t</a></p>')
             ind += 1
             if ind == len(items):
@@ -138,42 +173,17 @@ def differ():
         if 1 < len(items) != ind:
 
             def validate(x):
-                if x.count('|') == 2:
-                    if ')' in x:
-                        x = x[x.find('|') + 2:x.find('(')] + x[x.rfind('|'):]
-                    else:
-                        x = x[x.find('|') + 2:]
-                else:
-                    if ')' in x:
-                        x = x[x.find('|') + 2:x.find(' (')]
-                    else:
-                        x = x[x.find('|') + 2:]
-                return x
+                return rarities_values[x[1]]
 
-            items = items[:ind] + sorted(items[ind:], key=lambda x: validate(x))
+            items = items[:ind] + sorted(items[ind:], key=lambda x: validate(x), reverse=True)
+        print(perf_counter() - t0)
         if ind == len(items):
             return items
-        prev_item = items[ind]
-        output.write(f'<p><a href="https://steamcommunity.com/market/listings/730/{prev_item}">{prev_item}\t</a>')
-        for item in items[items.index(prev_item) + 1:]:
-            def validate(x):
-                if x.count('|') == 2:
-                    if ')' in x:
-                        x = x[x.find('|') + 2:x.find('(')] + x[x.rfind('|'):]
-                    else:
-                        x = x[x.find('|') + 2:]
-                else:
-                    if ')' in x:
-                        x = x[x.find('|') + 2:x.find(' (')]
-                    else:
-                        x = x[x.find('|') + 2:]
-                return x
-
-            if validate(prev_item) == validate(item):
-                output.write(f'......<a href="https://steamcommunity.com/market/listings/730/{item}">{item[item.find("(") + 1:item.find(")")]}</a>')
-            else:
-                output.write(f'<p><a href="https://steamcommunity.com/market/listings/730/{item}">{item}\t</a>')
-            prev_item = item
+        color_map = {
+            'Consumer': 'C0C7D0', 'Industrial': '8FC3FF', 'Mil-Spec': '0175FA', 'Restricted': '7C19D8', 'Classified': 'EC24E6', 'Covert': 'DD5032'
+        }
+        for item in items[ind:]:
+            output.write(f'<p><a style="font-size: 20px;color:#{color_map[item[1]]}" href="https://steamcommunity.com/market/listings/730/{item[0]}">{item[0]}\t</a>')
         print(f'{datetime.now().strftime("%H:%M:%S")} | {len(items)} New Items Added')
         return items
 
@@ -189,7 +199,7 @@ def check_case_update():
             'CS:GO Weapon Case', 'eSports 2013 Winter Case', 'Operation Hydra Case', 'eSports 2013 Case',
             'Operation Bravo Case', 'Recoil Case']
     box_name = differ()
-    if box_name and 'Case' in box_name[0] and '|' not in box_name[0] and box_name[0] not in past:
+    if box_name and box_name[0][1] == 'Case':
         return box_name[0], box_name[1:]
     return False, box_name
 
@@ -242,4 +252,4 @@ def check_case_update_blog(page=1):
 
 
 if __name__ == '__main__':
-    print(check_case_update_blog())
+    print(check_case_update())

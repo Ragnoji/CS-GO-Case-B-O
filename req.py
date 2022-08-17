@@ -6,11 +6,12 @@ import requests
 from datetime import datetime
 from threading import Thread
 from differ_items import differ
-from worker_template import worker
+from worker_template_requests import worker
 from weapon_parser import new_weapons
 import os
 from dotenv import load_dotenv
 import telebot
+import requests.adapters
 from selenium import webdriver
 
 
@@ -31,13 +32,6 @@ new_skins = False
 
 
 def main():
-    options = {
-        'proxy': {
-            'http': 'http://user58497:nx0yrs@193.160.211.84:1443',
-            'https': 'https://user58497:nx0yrs@193.160.211.84:1443',
-            'no_proxy': 'localhost,127.0.0.1'
-        }
-    }
     c_options = webdriver.ChromeOptions()
     driver = webdriver.Chrome("yandexdriver.exe", options=c_options)
 
@@ -119,10 +113,10 @@ def main():
         if case_re:
             new_box_name = case_re
             Thread(target=loop_alarm).start()
-            bot.send_message(852738955, "Новые кейс в CS:GO")
+            bot.send_message(852738955, "Новый кейс в CS:GO")
             break
         if case_fi:
-            new_box_name = case_fi
+            new_box_name = case_fi[0]
             Thread(target=loop_alarm).start()
             bot.send_message(852738955, "Новый кейс в CS:GO")
             break
@@ -141,7 +135,7 @@ def main():
     print(f'NEW CASE RELEASE\nCommand for fast buy:\n{console_command}')
     count = 0
     while True:
-        if not new_box_name:
+        if not new_box_name or 'Operation' in new_box_name:
             break
         if count == 20:
             count = 0
@@ -151,7 +145,7 @@ def main():
                 sleep(1)
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        cost = 70
+        cost = 72
         try:
             price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
         except Exception:
@@ -207,94 +201,113 @@ def main():
     # old_items = open('old_items.txt', 'r', encoding='utf-8').readlines()
     # current_names = open('current_names.txt', 'r', encoding='utf-8').readlines()
     # new_skins = new_weapons(current_items, old_items, current_names)
-    # list_of_covert = []
-    # list_of_classified = []
+    list_of_covert = []
+    list_of_classified = []
     # print(new_skins)
-    # if new_skins:
-    #     for collection in new_skins.keys():
-    #         for item in new_skins[collection]:
-    #             if 'Collection' in collection and item[1] == 'Covert':
-    #                 for exterior in item[2]:
-    #                     cost = 6000
-    #                     list_of_covert.append((item[0] + f' ({exterior})', cost, 2))
-    #
-    #             elif 'Collection' in collection and item[1] == 'Classified':
-    #                 for exterior in item[2]:
-    #                     cost = 3000
-    #                     list_of_classified.append((item[0] + f' ({exterior})', cost, 5))
-    #
-    #             elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
-    #                 for exterior in item[2]:
-    #                     if exterior == 'Factory New':
-    #                         cost = 400
-    #                     elif exterior == 'Minimal Wear':
-    #                         cost = 150
-    #                     else:
-    #                         cost = 100
-    #                     list_of_covert.append(('StatTrak™ ' + item[0] + f' ({exterior})', cost*2, 20))
-    #
-    #                     elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Classified':
-    #                 for exterior in item[2]:
-    #                     if exterior == 'Factory New':
-    #                         cost = 200
-    #                     elif exterior == 'Minimal Wear':
-    #                         cost = 100
-    #                     elif exterior == 'Field-Tested':
-    #                         cost = 60
-    #                     else:
-    #                         cost = 50
-    #                     list_of_classified.append((item[0] + f' ({exterior})', cost, 20))
-    # covert_workers = []
-    # if list_of_covert:
-    #     # covert_worker = Thread(target=worker, args=(list_of_covert, 2.5))
-    #     for c in list_of_covert:
-    #         covert_worker = Thread(target=worker, args=([c], 2))
-    #         covert_worker.start()
-    #         sleep(10)
-    #         covert_workers.append(covert_worker)
+    if new_skins:
+        for collection in new_skins.keys():
+            for item in new_skins[collection]:
+                if 'Collection' in collection and item[1] == 'Covert':
+                    for exterior in item[2]:
+                        cost = 7000
+                        list_of_covert.append((item[0] + f' ({exterior})', cost, 2))
 
-    # if list_of_classified:
-    #     classified_worker = Thread(target=worker, args=(list_of_classified, 2.5))
-    #     classified_worker.start()
+                elif 'Collection' in collection and item[1] == 'Classified':
+                    for exterior in item[2]:
+                        cost = 3500
+                        list_of_classified.append((item[0] + f' ({exterior})', cost, 4))
+
+                elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
+                    for exterior in item[2]:
+                        if exterior == 'Factory New':
+                            cost = 1400
+                            quan = 5
+                        elif exterior == 'Minimal Wear':
+                            cost = 1400
+                            quan = 5
+                        elif exterior == 'Field-Tested':
+                            cost = 700
+                            quan = 10
+                        else:
+                            continue
+                        list_of_covert.append((item[0] + f' ({exterior})', cost, quan))
+
+                elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Classified':
+                    for exterior in item[2]:
+                        if exterior == 'Factory New':
+                            cost = 350
+                            quan = 5
+                        elif exterior == 'Minimal Wear':
+                            cost = 140
+                            quan = 10
+                        elif exterior == 'Field-Tested':
+                            cost = 140
+                            quan = 10
+                        else:
+                            continue
+                        list_of_classified.append((item[0] + f' ({exterior})', cost, quan))
+    covert_workers = []
+    classified_workers = []
+    if list_of_covert:
+        covert_worker = Thread(target=worker, args=(list_of_covert, 730, 1))
+        covert_workers.append(covert_worker)
+        covert_worker.start()
+
+    if list_of_classified:
+        classified_worker = Thread(target=worker, args=(list_of_classified, 0.4))
+        classified_workers.append(classified_worker)
+        classified_worker.start()
+    covert_s = []
+    class_s = []
+    restr_s = []
+    milsp_s = []
     if isinstance(stickers, list):
 
         def sticker_map(s):
-            if '(Gold)' in s:
-                return s, 80, 10
-            elif '(Foil)' in s:
-                return s, 40, 30
-            elif '(Holo)' in s:
-                return s, 14, 100
+            if s[1] == 'Covert':
+                covert_s.append((s[0], 140, 15))
+            elif s[1] == 'Classified':
+                class_s.append((s[0], 70, 30))
+            elif s[1] == 'Restricted':
+                restr_s.append((s[0], 7, 100))
+            elif s[1] == 'Mil-Spec':
+                milsp_s.append((s[0], 1, 300))
             else:
-                return s, 2, 200
-
-        stickers = list(map(lambda s: sticker_map(s), stickers))
-                            # filter(lambda s: isinstance(s, str) and ('(Holo)' in s or '(Gold)' in s or '(Foil)' in s),
-                            #        stickers)))
+                return False
+        for s in stickers:
+            sticker_map(s)
     sticker_workers = []
     if stickers:
-        gold_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Gold)' in s[0]], 1))
-        foil_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Foil)' in s[0]], 0.4))
-        holo_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(Holo)' in s[0]], 0.4))
-        paper_sticker_worker = Thread(target=worker, args=([s for s in stickers if '(' not in s[0] and ')' not in s[0]], 0.4))
-        sticker_workers = [gold_sticker_worker, foil_sticker_worker, holo_sticker_worker, paper_sticker_worker]
-        for s_w in sticker_workers[::-1]:
+        if covert_s:
+            covert_sticker_worker = Thread(target=worker, args=(covert_s, 730, 0.4))
+            sticker_workers.append(covert_sticker_worker)
+        if class_s:
+            class_sticker_worker = Thread(target=worker, args=(class_s, 730, 0.4))
+            sticker_workers.append(class_sticker_worker)
+        if restr_s:
+            restr_sticker_worker = Thread(target=worker, args=(restr_s, 730, 0.3))
+            sticker_workers.append(restr_sticker_worker)
+        if milsp_s:
+            milsp_sticker_worker = Thread(target=worker, args=(milsp_s, 730, 0.3))
+            sticker_workers.append(milsp_sticker_worker)
+        for s_w in sticker_workers:
             s_w.start()
-            sleep(6)
+            sleep(0.5)
 
-    # if new_box_name or is_operation:
-    #     knives_worker = Thread(target=worker, args=(list_of_knives, 4))
+    # if new_box_name:
+    #     knives_worker = Thread(target=worker, args=(list_of_knives, 0.5))
     #     knives_worker.start()
 
     for s_w in sticker_workers:
         s_w.join()
     # if new_box_name or is_operation:
     #     knives_worker.join()
-    # if list_of_covert:
-    #     for c in covert_workers:
-    #         c.join()
-    # if list_of_classified:
-    #     classified_worker.join()
+    if list_of_covert:
+        for c in covert_workers:
+            c.join()
+    if list_of_classified:
+        for c in classified_workers:
+            c.join()
     driver.close()
 
 

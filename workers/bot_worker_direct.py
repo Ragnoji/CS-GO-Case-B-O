@@ -1,13 +1,14 @@
 import asyncio
-from time import sleep
+from time import sleep, perf_counter
 import requests
+import requests.adapters
 from datetime import datetime
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
 
 
-def worker_direct(list_of_items, game_index, mode=0, delay=0):
+def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0.2):
     load_dotenv()
     steam_m = os.getenv('STEAM_AUTH_MAIN')
     steam_r = os.getenv('STEAM_REMEMBER_MAIN')
@@ -22,10 +23,18 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0):
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
-
+    proxy = {'https': 'socks5://user58497:nx0yrs@193.160.211.84:11443',
+             'http': 'socks5://user58497:nx0yrs@193.160.211.84:11443'}
+    use_proxy = True
     session = requests.session()
+    adapter = requests.adapters.HTTPAdapter(max_retries=2)
+    session.mount('https://', adapter)
+    session.mount('http://', adapter)
     session.headers.update(headers)
-    resp = session.get('https://steamcommunity.com/market/')
+    if use_proxy:
+        session.proxies.update(proxy)
+    session.headers.update(headers)
+    resp = session.get('https://steamcommunity.com/')
     with open('OUTPUT.html', 'w', encoding='utf-8') as o:
         o.write(resp.text)
 
@@ -43,28 +52,13 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0):
         'price_total': '', 'quantity': '', 'billing_state': '', 'save_my_address': '0',
     }
     if mode == 0:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        bot = commands.Bot(command_prefix='>')
-
-        @bot.event
-        async def on_message(msg):
-            if msg.author == bot.user:
-                return
-            if msg.embeds and ('Rust Item Definitions Updated' in msg.embeds[0].title or 'Rust Store' in msg.embed[0].title):
-                await bot.close()
-
-        bot.run('NjUwMzQxMTc3NTcyMTk2MzY0.GIPr5_.D_mTHc23pm_i58r-ja8LrZ2LzV10rKDvoAmleE')
-
-        while not bot.is_closed():
-            continue
+        sleep(delay * 0.2)
     elif mode == -1:
         pass
     else:
-        while datetime.now().time().hour != 3:
-            sleep(0.1)
-
-    sleep(delay * 0.05)
+        while datetime.now().hour != 3 or datetime.now().microsecond / 1000000 < 0.5:
+            continue
+        sleep(0.2 * delay)
 
     i = 0
     while list_of_items:
@@ -75,7 +69,13 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0):
         credentials['price_total'] = int(float(item[1]) * 100) * int(item[2])
         credentials['quantity'] = item[2]
         try:
+            if use_proxy:
+                session.proxies.update(proxy)
+            t0 = perf_counter()
             resp = session.post(create_buy_order, data=credentials, timeout=0.6)
+            t0 = perf_counter() - t0
+            if t0 < 0.5:
+                sleep(0.5 - t0)
             j = resp.json()
             if not j:
                 print('COOKIES EXPIRED')
@@ -88,12 +88,14 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0):
                         message += f' | {j["buy_orderid"]}\n'
                     logg.write(message)
                 del list_of_items[i]
+                sleep(0.3)
                 continue
             if j['success'] == 40:
-                sleep(0.1)
+                sleep(0.3)
                 continue
-            break
+            sleep(slp)
         except requests.exceptions.Timeout:
             pass
         i += 1
+    session.close()
 

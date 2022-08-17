@@ -32,7 +32,7 @@ def listings_worker(list_of_items):
     item_url = 'https://steamcommunity.com/market/listings/730/'
     proxy = {'https': 'socks5://user58497:nx0yrs@193.160.211.84:11443',
              'http': 'socks5://user58497:nx0yrs@193.160.211.84:11443'}
-    use_proxy = False
+    use_proxy = True
     session = requests.session()
     adapter = requests.adapters.HTTPAdapter(max_retries=2)
     session.mount('https://', adapter)
@@ -81,31 +81,12 @@ def listings_worker(list_of_items):
             r = re.findall(r'var g_rgAssets = \{.*\}', resp)
             prices = re.findall(r'var g_rgListingInfo = \{.*\}', resp)
             k = 0
-            while (not r or not prices) and k < 2:
-                print('!')
-                sleep(5.5)
-                if use_proxy:
-                    session.proxies.update(proxy)
-
-                while True:
-                    try:
-                        resp = session.get(item_url + item + query_settings, headers=headers)
-                        break
-                    except requests.ConnectionError:
-                        continue
-                resp = resp.text
-                with open('OUTPUT.html', 'w', encoding='utf-8') as o:
-                    o.write(resp)
-                soup = BeautifulSoup(resp, "html.parser")
-                r = re.findall(r'var g_rgAssets = \{.*\}', resp)
-                prices = re.findall(r'var g_rgListingInfo = \{.*\}', resp)
-                k += 1
-            if k == 2:
-                print('!!!')
+            if not r or not prices:
+                print('>')
                 continue
             while (not r or not prices) or ('converted_price' not in list(json.loads(prices[0][22:]).items())[0][1].keys()):
                 print('?')
-                sleep(5.5)
+                sleep(4)
                 if use_proxy:
                     session.proxies.update(proxy)
                 while True:
@@ -159,17 +140,14 @@ def listings_worker(list_of_items):
                         while True:
                             try:
                                 resp2 = requests.get(link)
-                                break
+                                try:
+                                    resp2 = resp2.json()
+                                    break
+                                except json.decoder.JSONDecodeError:
+                                    sleep(1)
+                                    continue
                             except requests.ConnectionError:
                                 continue
-                    while True:
-                        try:
-                            resp2 = resp2.json()
-                            break
-                        except json.decoder.JSONDecodeError:
-                            sleep(1)
-                            continue
-                        break
                     if resp2:
                         if listing in context_market.keys():
                             this_price = context_market[listing][0]
@@ -189,19 +167,17 @@ def listings_worker(list_of_items):
                 print(f"Cheapest price | {cheapest_price}")
                 print('\n'.join(to_print))
                 bot.send_message(852738955, f"{item} | {cheapest_price} руб.\n" + '\n'.join(to_print))
-            sleep(5.5)
+            sleep(4)
         print(f'{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | sleeping 4.0 sec')
         with open('item_cache', 'wb') as ch:
             pickle.dump(item_cache, ch)
-        sleep(5.5)
+        sleep(4)
 
 
 items = [('★ Sport Gloves | Nocts (Field-Tested)', 0.18, 27000), ('★ Sport Gloves | Slingshot (Field-Tested)', 0.18, 60000),
          ('★ Sport Gloves | Scarlet Shamagh (Field-Tested)', 0.18, 24000),
          ('★ Specialist Gloves | Tiger Strike (Field-Tested)', 0.18, 67000),
          ('★ Specialist Gloves | Field Agent (Field-Tested)', 0.18, 40000),
-         ('★ Moto Gloves | Blood Pressure (Field-Tested)', 0.18, 15000),
-         ('★ Moto Gloves | Finish Line (Field-Tested)', 0.18, 18300), ('★ Moto Gloves | Smoke Out (Field-Tested)', 0.18, 21350),
-         ('★ Driver Gloves | Black Tie (Field-Tested)', 0.18, 21000), ('★ Driver Gloves | Snow Leopard (Field-Tested)', 0.18, 56000),
+         ('★ Driver Gloves | Snow Leopard (Field-Tested)', 0.18, 56000)
 ]
 listings_worker(items)

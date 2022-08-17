@@ -11,7 +11,7 @@ import os
 from dotenv import load_dotenv
 
 
-def worker(list_of_items, game_index, mode=0, delay=0):
+def worker(list_of_items, game_index, mode=0, delay=0, slp=0.3):
     options = webdriver.ChromeOptions()
 
     binary_yandex_driver_file = 'yandexdriver.exe'
@@ -34,11 +34,14 @@ def worker(list_of_items, game_index, mode=0, delay=0):
                'User-Agent': 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.134 YaBrowser/22.7.1.806 Yowser/2.5 Safari/537.36',
                'Cookie': f'{steam_m};{steam_r};steamCurrencyId=5'
                }
+    proxy = {'https': 'socks5://user58497:nx0yrs@193.160.211.84:11443',
+             'http': 'socks5://user58497:nx0yrs@193.160.211.84:11443'}
     session = requests.session()
     session.headers.update(headers)
-    session.get('https://steamcommunity.com/market/')
+    session.get('https://steamcommunity.com/')
     driver.get(url)
     for c in session.cookies:
+        print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
         driver.add_cookie({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
     while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
         driver.refresh()
@@ -61,28 +64,13 @@ def worker(list_of_items, game_index, mode=0, delay=0):
     driver.switch_to.window(list_of_tabs[0])
 
     if mode == 0:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        bot = commands.Bot(command_prefix='>')
-
-        @bot.event
-        async def on_message(msg):
-            if msg.author == bot.user:
-                return
-            if msg.embeds and ('Rust Item Definitions Updated' in msg.embeds[0].title or 'Rust Store' in msg.embed[0].title):
-                await bot.close()
-
-        bot.run('NjUwMzQxMTc3NTcyMTk2MzY0.GIPr5_.D_mTHc23pm_i58r-ja8LrZ2LzV10rKDvoAmleE')
-
-        while not bot.is_closed():
-            continue
-        sleep(delay * 0.01)
+        sleep(delay * 0.1)
     elif mode == -1:
         pass
     else:
         while datetime.now().hour != 3 or datetime.now().microsecond / 1000000 < 0.3:
             continue
-        sleep(0.01 * delay)
+        sleep(0.25 * delay)
 
     index = 0
     while list_of_items:
@@ -136,7 +124,7 @@ def worker(list_of_items, game_index, mode=0, delay=0):
         place.click()
         count_map[name] += 1
 
-        sleep(0.25)
+        sleep(slp)
         is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
         if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
             index += 1
