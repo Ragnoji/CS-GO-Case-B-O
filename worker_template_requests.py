@@ -1,14 +1,12 @@
-import asyncio
 from time import sleep, perf_counter
 import requests
 import requests.adapters
 from datetime import datetime
-from discord.ext import commands
 import os
 from dotenv import load_dotenv
 
 
-def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0):
+def worker(list_of_items, game_index, slp=0.2):
     load_dotenv()
     steam_r = os.getenv('STEAM_REFRESH_MAIN')
     steam_s = os.getenv('STEAM_SECURE_MAIN')
@@ -24,11 +22,10 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0):
     session.mount('http://', adapter)
     if use_proxy:
         session.proxies.update(proxy)
+    # session.headers.update(headers)
     session.cookies.set(steam_s[:steam_s.find('=')], steam_s[steam_s.find('=') + 1:], domain='steamcommunity.com', path='/')
     session.cookies.set(steam_r[:steam_r.find('=')], steam_r[steam_r.find('=') + 1:], domain='login.steampowered.com', path='/')
     resp = session.get('https://login.steampowered.com/jwt/refresh?redir=https%3A%2F%2Fsteamcommunity.com')
-    for c in session.cookies:
-        print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
     with open('OUTPUT.html', 'w', encoding='utf-8') as o:
         o.write(resp.text)
 
@@ -55,14 +52,6 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0):
         'sessionid': sessionid, 'currency': '5', 'appid': game_index, 'market_hash_name': '',
         'price_total': '', 'quantity': '', 'billing_state': '', 'save_my_address': '0',
     }
-    if mode == 0:
-        sleep(delay * 0.1)
-    elif mode == -1:
-        pass
-    else:
-        while datetime.now().hour != 3 or datetime.now().microsecond / 1000000 < 0.05:
-            continue
-        sleep(0.2 * delay)
 
     i = 0
     while list_of_items:
@@ -76,7 +65,7 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0):
             if use_proxy:
                 session.proxies.update(proxy)
             t0 = perf_counter()
-            resp = session.post(create_buy_order, data=credentials, timeout=0.5)
+            resp = session.post(create_buy_order, data=credentials, timeout=0.6)
             t0 = perf_counter() - t0
             if t0 < 0.5:
                 sleep(0.5 - t0)

@@ -81,11 +81,15 @@ def differ():
         old_lines = old_file.readlines()
         url = f'https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/{current_id}/csgo/resource/csgo_english.txt'
         for _ in range(1):
+            print('1 pos')
             current_names = open('current_names.txt', 'w', encoding='utf-8')
             while True:
                 try:
+                    print('1loop')
                     sleep(1)
                     response = requests.get(url)
+                    with open('DEBUG_SHIT.txt', 'w', encoding='utf-8') as op:
+                        op.write(response.text)
                     if isinstance(response.text, str) and len(response.text) < 1000:
                         continue
                 except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
@@ -101,6 +105,7 @@ def differ():
             url_items = f'https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/{current_id}/csgo/scripts/items/items_game.txt'
             while True:
                 try:
+                    print('2loop')
                     sleep(1)
                     response = requests.get(url_items)
                     if isinstance(response.text, str) and len(response.text) < 1000:
@@ -109,6 +114,7 @@ def differ():
                     sleep(5)
                     continue
                 break
+            print('2 pos')
             current_items.write(response.text)
             current_items.close()
             current_items = open('current_items.txt', 'r', encoding='utf-8').readlines()
@@ -159,6 +165,7 @@ def differ():
                         items[items.index(line[li + 2:ri])] = [sticker_map[line[li + 2:ri]], rarities[last_rarity]]
             if items:
                 break
+        print('4 pos')
 
         if not items:
             output.write('')
@@ -199,7 +206,7 @@ def check_case_update():
             'CS:GO Weapon Case', 'eSports 2013 Winter Case', 'Operation Hydra Case', 'eSports 2013 Case',
             'Operation Bravo Case', 'Recoil Case']
     box_name = differ()
-    if box_name and box_name[0][1] == 'Case':
+    if box_name and box_name[0][1] == 'Case' and box_name[0][0] not in past:
         return box_name[0], box_name[1:]
     return False, box_name
 

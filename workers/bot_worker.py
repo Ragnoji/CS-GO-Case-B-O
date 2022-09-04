@@ -11,7 +11,7 @@ import os
 from dotenv import load_dotenv
 
 
-def worker(list_of_items, game_index, mode=0, delay=0, slp=0.3):
+def worker(list_of_items, game_index, mode=0, delay=0, slp=0.5):
     options = webdriver.ChromeOptions()
 
     binary_yandex_driver_file = 'yandexdriver.exe'
@@ -24,29 +24,36 @@ def worker(list_of_items, game_index, mode=0, delay=0, slp=0.3):
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
 
     load_dotenv()
-    steam_m = os.getenv('STEAM_AUTH_MAIN')
-    steam_r = os.getenv('STEAM_REMEMBER_MAIN')
-    headers = {'Host': 'steamcommunity.com',
-               'Origin': 'https://steamcommunity.com',
-               'Referer': 'https://steamcommunity.com/market', 'Connection': 'keep-alive',
-               'Accept-Language': 'en;q=0.9,zh;q=0.8', 'Accept-Encoding': 'gzip, deflate, br',
-               'Accept': '*/*',
-               'User-Agent': 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.134 YaBrowser/22.7.1.806 Yowser/2.5 Safari/537.36',
-               'Cookie': f'{steam_m};{steam_r};steamCurrencyId=5'
-               }
-    proxy = {'https': 'socks5://user58497:nx0yrs@193.160.211.84:11443',
-             'http': 'socks5://user58497:nx0yrs@193.160.211.84:11443'}
+    # steam_m = os.getenv('STEAM_MACHINE_MAIN')
+    steam_r = os.getenv('STEAM_REFRESH_MAIN')
+    steam_s = os.getenv('STEAM_SECURE_MAIN')
+    # headers = {'Host': 'steamcommunity.com',
+    #            'Origin': 'https://steamcommunity.com',
+    #            'Referer': 'https://steamcommunity.com/market', 'Connection': 'keep-alive',
+    #            'Accept-Language': 'en;q=0.9,zh;q=0.8', 'Accept-Encoding': 'gzip, deflate, br',
+    #            'Accept': '*/*',
+    #            'User-Agent': 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.134 YaBrowser/22.7.1.806 Yowser/2.5 Safari/537.36',
+    #            'Cookie': f'{steam_m};{steam_r};steamCurrencyId=5'
+    #            }
+    # proxy = {'https': 'socks5://user58497:nx0yrs@193.160.211.84:11443',
+    #          'http': 'socks5://user58497:nx0yrs@193.160.211.84:11443'}
     session = requests.session()
-    session.headers.update(headers)
-    session.get('https://steamcommunity.com/')
+    # session.headers.update(headers)
+    session.cookies.set(steam_s[:steam_s.find('=')], steam_s[steam_s.find('=') + 1:], domain='steamcommunity.com', path='/')
+    # session.cookies.set(steam_m[:steam_m.find('=')], steam_m[steam_m.find('=') + 1:], domain='login.steampowered.com', path='/')
+    session.cookies.set(steam_r[:steam_r.find('=')], steam_r[steam_r.find('=') + 1:], domain='login.steampowered.com', path='/')
+    session.get('https://login.steampowered.com/jwt/refresh?redir=https%3A%2F%2Fsteamcommunity.com')
     driver.get(url)
     for c in session.cookies:
+        if c.domain != 'steamcommunity.com':
+            continue
         print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
         driver.add_cookie({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
     while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
         driver.refresh()
         sleep(2)
-    session.close()
+        continue
+    # session.close()
 
     list_of_tabs = [driver.current_window_handle]
     count_map = {list_of_items[0][0]: 0}
@@ -64,13 +71,13 @@ def worker(list_of_items, game_index, mode=0, delay=0, slp=0.3):
     driver.switch_to.window(list_of_tabs[0])
 
     if mode == 0:
-        sleep(delay * 0.1)
+        sleep(delay * 0.2)
     elif mode == -1:
         pass
     else:
-        while datetime.now().hour != 3 or datetime.now().microsecond / 1000000 < 0.3:
+        while datetime.now().hour != 3 or datetime.now().microsecond / 1000000 < 0.2:
             continue
-        sleep(0.25 * delay)
+        sleep(0.2 * delay)
 
     index = 0
     while list_of_items:
@@ -99,8 +106,7 @@ def worker(list_of_items, game_index, mode=0, delay=0, slp=0.3):
                 logg.write(message)
             driver.get(url)
             session = requests.session()
-            session.headers.update(headers)
-            session.get('https://steamcommunity.com/market/')
+            session.get('https://login.steampowered.com/jwt/refresh?redir=https%3A%2F%2Fsteamcommunity.com')
             driver.get(url)
             for c in session.cookies:
                 driver.add_cookie({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
