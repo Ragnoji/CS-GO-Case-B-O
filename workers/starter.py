@@ -26,7 +26,7 @@ def main():
                 count_map[list_of_items[i][0]] = 0
     print(*list_of_items)
     game_index = 730
-    webdriver = True
+    webdriver = False
     mode = -1  # 0 если нужен бот на нормал скины и 1 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
     parallel = True  # Регулировка режима запуска воркеров
     require = input(f'Согласны ли вы с таргетами и параметрами:\nwebdriver = {webdriver}\ngame_index = {game_index}\nmode = {mode}\nparallel = {parallel}\n')

@@ -60,11 +60,12 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0):
     elif mode == -1:
         pass
     else:
-        while datetime.now().hour != 3 or datetime.now().microsecond / 1000000 < 0.05:
+        while datetime.now().hour != 2 or datetime.now().minute != 59 or datetime.now().second != 59 or datetime.now().microsecond / 1000000 < 0.95:
             continue
-        sleep(0.2 * delay)
+        sleep(0.15 * delay)
 
     i = 0
+    time_out = 0.5
     while list_of_items:
         if i == len(list_of_items):
             i = 0
@@ -76,10 +77,10 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0):
             if use_proxy:
                 session.proxies.update(proxy)
             t0 = perf_counter()
-            resp = session.post(create_buy_order, data=credentials, timeout=0.5)
+            resp = session.post(create_buy_order, data=credentials, timeout=time_out)
             t0 = perf_counter() - t0
-            if t0 < 0.5:
-                sleep(0.5 - t0)
+            if t0 < time_out:
+                sleep(time_out - t0)
             j = resp.json()
             if not j:
                 print('COOKIES EXPIRED')

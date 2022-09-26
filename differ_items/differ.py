@@ -72,15 +72,15 @@ def differ():
             if current_id != old_id:
                 old_id = current_id
                 print(f'\n{datetime.now().strftime("%H:%M:%S")} | {old_id}')
-                print('sleeping 15 seconds')
-                sleep(15)
+                print('sleeping 40 seconds')
+                sleep(40)
                 break
             else:
                 print(f'Nothing new ({current_id})')
 
         old_lines = old_file.readlines()
         url = f'https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/{current_id}/csgo/resource/csgo_english.txt'
-        for _ in range(1):
+        for _ in range(20):
             print('1 pos')
             current_names = open('current_names.txt', 'w', encoding='utf-8')
             while True:
@@ -165,6 +165,7 @@ def differ():
                         items[items.index(line[li + 2:ri])] = [sticker_map[line[li + 2:ri]], rarities[last_rarity]]
             if items:
                 break
+            sleep(10)
         print('4 pos')
 
         if not items:

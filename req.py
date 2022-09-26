@@ -31,7 +31,7 @@ new_skins = False
 
 def main():
     c_options = webdriver.ChromeOptions()
-    driver = webdriver.Chrome("chromedriver.exe", options=c_options)
+    driver = webdriver.Chrome("yandexdriver.exe", options=c_options)
 
     url = f'https://steamcommunity.com/market/listings/730/Place'
     load_dotenv()
@@ -53,10 +53,10 @@ def main():
         driver.refresh()
         sleep(2)
     session.close()
-    balance_element = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_walletbalance_amount"]').text
-    balance = str(filter(lambda s: s.isdigit() or s in [',', '.'], balance_element))
+    balance_element = driver.find_element_by_xpath('//*[@id="header_wallet_balance"]').text
+    balance = ''.join(list((filter(lambda s: s.isdigit() or s in [',', '.'], balance_element))))
     balance = int(balance.split(',')[0].split('.')[0])
-    print(balance)
+
     def case_blog(fun=differ.check_case_update_blog):
         global case_re
         case_re = fun()
@@ -121,7 +121,7 @@ def main():
                 sleep(1)
         driver.execute_script(console_command)
         price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        cost = 64  # Price in your currency
+        cost = 30  # Price in your currency
         try:
             price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
         except Exception:
@@ -151,9 +151,9 @@ def main():
             price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
             price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
         balance_element = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_walletbalance_amount"]').text
-        balance = str(filter(lambda s: s.isdigit() or s in [',', '.'], balance_element))
+        balance = ''.join(list(filter(lambda s: s.isdigit() or s in [',', '.'], balance_element)))
         balance = int(balance.split(',')[0].split('.')[0])
-        quant = (balance // cost) - 1
+        quant = (balance // cost) - 5
         # sleep(0.1)
         quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
         quantity.send_keys(Keys.BACKSPACE * 20, f'{quant}')
@@ -198,12 +198,12 @@ def main():
                 if 'Collection' in collection and item[1] == 'Covert':
                     for exterior in item[2]:
                         cost = 8000
-                        list_of_extreme_covert.append((item[0] + f' ({exterior})', cost, 5))
+                        list_of_extreme_covert.append((item[0] + f' ({exterior})', cost, 3))
 
                 elif 'Collection' in collection and item[1] == 'Classified':
                     for exterior in item[2]:
                         cost = 3500
-                        list_of_classified.append((item[0] + f' ({exterior})', cost, 5))
+                        list_of_classified.append((item[0] + f' ({exterior})', cost, 6))
 
                 # elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
                 #     for exterior in item[2]:
@@ -220,20 +220,20 @@ def main():
                 #             continue
                 #         list_of_covert.append((item[0] + f' ({exterior})', cost, quan))
 
-                elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Classified':
-                    for exterior in item[2]:
-                        if exterior == 'Factory New':
-                            cost = 70
-                            quan = 10
-                        elif exterior == 'Minimal Wear':
-                            cost = 70
-                            quan = 10
-                        # elif exterior == 'Field-Tested':
-                        #     cost = 70
-                        #     quan = 10
-                        else:
-                            continue
-                        list_of_classified.append((item[0] + f' ({exterior})', cost, quan))
+                # elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Classified':
+                #     for exterior in item[2]:
+                #         if exterior == 'Factory New':
+                #             cost = 70
+                #             quan = 10
+                #         elif exterior == 'Minimal Wear':
+                #             cost = 70
+                #             quan = 10
+                #         # elif exterior == 'Field-Tested':
+                #         #     cost = 70
+                #         #     quan = 10
+                #         else:
+                #             continue
+                #         list_of_classified.append((item[0] + f' ({exterior})', cost, quan))
     covert_workers = []
     classified_workers = []
     extreme_workers = []
@@ -267,7 +267,7 @@ def main():
         # Need to adapt prices depending on your choice and currency
         def sticker_map(s):
             if s[1] == 'Covert':
-                covert_s.append((s[0], 70, 15))
+                covert_s.append((s[0], 64, 15))
             elif s[1] == 'Classified':
                 class_s.append((s[0], 33, 30))
             elif s[1] == 'Restricted':
@@ -284,14 +284,14 @@ def main():
             covert_sticker_worker = Thread(target=worker, args=(covert_s, 730, 0.4))
             sticker_workers.append(covert_sticker_worker)
         if class_s:
-            class_sticker_worker = Thread(target=worker, args=(class_s, 730, 0.4))
+            class_sticker_worker = Thread(target=worker, args=(class_s, 730, 0.3))
             sticker_workers.append(class_sticker_worker)
         if restr_s:
             restr_sticker_worker = Thread(target=worker, args=(restr_s, 730, 0.3))
             sticker_workers.append(restr_sticker_worker)
-        if milsp_s:
-            milsp_sticker_worker = Thread(target=worker, args=(milsp_s, 730, 0.3))
-            sticker_workers.append(milsp_sticker_worker)
+        # if milsp_s:
+        #     milsp_sticker_worker = Thread(target=worker, args=(milsp_s, 730, 0.3))
+        #     sticker_workers.append(milsp_sticker_worker)
         for s_w in sticker_workers:
             s_w.start()
             sleep(0.5)

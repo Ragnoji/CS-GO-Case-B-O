@@ -75,7 +75,7 @@ def worker(list_of_items, game_index, mode=0, delay=0, slp=0.5):
     elif mode == -1:
         pass
     else:
-        while datetime.now().hour != 3 or datetime.now().microsecond / 1000000 < 0.2:
+        while datetime.now().hour != 2 or datetime.now().minute != 59 or datetime.now().second != 59 or datetime.now().microsecond / 1000000 < 0.95:
             continue
         sleep(0.2 * delay)
 
