@@ -68,7 +68,11 @@ def differ():
                 break
 
             old_data = BeautifulSoup(response.text, features='lxml')
-            current_id = old_data.find("a", "tooltipped tooltipped-sw btn-outline btn BtnGroup-item text-mono f6").getText().strip()
+            current_id = old_data.find("a", "tooltipped tooltipped-sw btn-outline btn BtnGroup-item text-mono f6")
+            if current_id is None:
+                print(f'Page loaded incorrectly')
+                continue
+            current_id = current_id.getText().strip()
             if current_id != old_id:
                 old_id = current_id
                 print(f'\n{datetime.now().strftime("%H:%M:%S")} | {old_id}')
