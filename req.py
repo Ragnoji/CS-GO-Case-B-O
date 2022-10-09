@@ -53,7 +53,7 @@ def main():
         driver.refresh()
         sleep(2)
     session.close()
-    balance_element = driver.find_element_by_xpath('//*[@id="header_wallet_balance"]').text
+    balance_element = driver.find_element_by_xpath('//*[@id="marketWalletBalanceAmount"]').text
     balance = ''.join(list((filter(lambda s: s.isdigit() or s in [',', '.'], balance_element))))
     balance = int(balance.split(',')[0].split('.')[0])
 
@@ -109,78 +109,15 @@ def main():
     Thread(target=loop_alarm).start()
     console_command = f'Market_ShowBuyOrderPopup(730, "{new_box_name}", "{new_box_name}")'
     print(f'NEW CASE RELEASE\nCommand for fast buy:\n{console_command}')
-    count = 0
-    while True:
-        if not new_box_name or 'Operation' in new_box_name:  # No sense in placing bo for operation case
-            break
-        if count == 20:  # Trigger for refreshing page, because more you open buy order form pop up, more it lags
-            count = 0
-            driver.refresh()
-            while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
-                driver.refresh()
-                sleep(1)
-        driver.execute_script(console_command)
-        price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-        cost = 30  # Price in your currency
-        try:
-            price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
-        except Exception:
-            with open('log.txt', 'a', encoding='utf-8') as logg:
-                message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | слетела кука или баганула страница\n'
-                logg.write(message)
-                print(message)
-            session = requests.session()
-            session.cookies.set(steam_s[:steam_s.find('=')], steam_s[steam_s.find('=') + 1:],
-                                domain='steamcommunity.com',
-                                path='/')
-            session.cookies.set(steam_r[:steam_r.find('=')], steam_r[steam_r.find('=') + 1:],
-                                domain='login.steampowered.com',
-                                path='/')
-            session.get('https://login.steampowered.com/jwt/refresh?redir=https%3A%2F%2Fsteamcommunity.com')
-            driver.get(url)
-            for c in session.cookies:
-                if c.domain != 'steamcommunity.com':
-                    continue
-                print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
-                driver.add_cookie({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
-            while not driver.find_elements_by_xpath('//*[@id="header_wallet_balance"]'):
-                driver.refresh()
-                sleep(2)
-            session.close()
-            driver.execute_script(console_command)
-            price = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_price"]')
-            price.send_keys(Keys.BACKSPACE * 20, f'{cost}')
-        balance_element = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_walletbalance_amount"]').text
-        balance = ''.join(list(filter(lambda s: s.isdigit() or s in [',', '.'], balance_element)))
-        balance = int(balance.split(',')[0].split('.')[0])
-        quant = (balance // cost) - 5
-        # sleep(0.1)
-        quantity = driver.find_element_by_xpath('//*[@id="market_buy_commodity_input_quantity"]')
-        quantity.send_keys(Keys.BACKSPACE * 20, f'{quant}')
-        # sleep(0.1)
-
-        accept = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_accept_ssa"]')
-        if not accept.is_selected():
-            accept.click()
-        # sleep(0.1)
-
-        place = driver.find_element_by_xpath('//*[@id="market_buyorder_dialog_purchase"]')
-        if not place.is_displayed():
-            count = 20
-            continue
-        place.click()
-        sleep(0.3)
-        count += 1
-
-        is_error = driver.find_element_by_id('market_buyorder_dialog_error_text').text
-        if is_error != 'You already have an active buy order for this item. You will need to either cancel that order, or wait for it to be fulfilled before you can place a new order.':
-            continue
-
-        with open('log.txt', 'a', encoding='utf-8') as logg:
-            message = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {new_box_name} | {cost} руб | {quant}\n'
-            logg.write(message)
-            print(message)
-        break
+    cost = 30  # В рублях
+    quantity = (balance // cost) - 30
+    if new_box_name and 'Operation' not in new_box_name:  # No sense in placing bo for operation case
+        print(f'"{new_box_name}" {cost} {quantity}')
+        case_worker = Thread(target=worker, args=((new_box_name, cost, quantity), 730, 0.1))
+        case_worker.start()
+        while case_worker.is_alive():
+            print('Trying case')
+            sleep(5)
 
     # current_items = open('current_items.txt', 'r', encoding='utf-8').readlines()
     # old_items = open('old_items.txt', 'r', encoding='utf-8').readlines()
@@ -198,12 +135,14 @@ def main():
                 if 'Collection' in collection and item[1] == 'Covert':
                     for exterior in item[2]:
                         cost = 8000
-                        list_of_extreme_covert.append((item[0] + f' ({exterior})', cost, 3))
+                        # list_of_extreme_covert.append((item[0] + f' ({exterior})', cost, 3))
+                        print(f'"{item[0]} ({exterior})" {cost} 3')
 
                 elif 'Collection' in collection and item[1] == 'Classified':
                     for exterior in item[2]:
                         cost = 3500
-                        list_of_classified.append((item[0] + f' ({exterior})', cost, 6))
+                        # list_of_classified.append((item[0] + f' ({exterior})', cost, 6))
+                        print(f'"{item[0]} ({exterior})" {cost} 6')
 
                 # elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
                 #     for exterior in item[2]:
@@ -267,11 +206,11 @@ def main():
         # Need to adapt prices depending on your choice and currency
         def sticker_map(s):
             if s[1] == 'Covert':
-                covert_s.append((s[0], 64, 15))
+                covert_s.append((s[0], 65, 30))
             elif s[1] == 'Classified':
-                class_s.append((s[0], 33, 30))
+                class_s.append((s[0], 33, 50))
             elif s[1] == 'Restricted':
-                restr_s.append((s[0], 7, 100))
+                restr_s.append((s[0], 7, 200))
             # elif s[1] == 'Mil-Spec':
             #     milsp_s.append((s[0], 1, 300))
             else:
@@ -281,13 +220,13 @@ def main():
     sticker_workers = []
     if stickers:
         if covert_s:
-            covert_sticker_worker = Thread(target=worker, args=(covert_s, 730, 0.4))
+            covert_sticker_worker = Thread(target=worker, args=(covert_s, 730, 0.4, True))
             sticker_workers.append(covert_sticker_worker)
-        if class_s:
-            class_sticker_worker = Thread(target=worker, args=(class_s, 730, 0.3))
-            sticker_workers.append(class_sticker_worker)
+        # if class_s:
+        #     class_sticker_worker = Thread(target=worker, args=(class_s, 730, 0.3))
+        #     sticker_workers.append(class_sticker_worker)
         if restr_s:
-            restr_sticker_worker = Thread(target=worker, args=(restr_s, 730, 0.3))
+            restr_sticker_worker = Thread(target=worker, args=(restr_s, 730, 0.2))
             sticker_workers.append(restr_sticker_worker)
         # if milsp_s:
         #     milsp_sticker_worker = Thread(target=worker, args=(milsp_s, 730, 0.3))
