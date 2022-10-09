@@ -13,7 +13,9 @@ def differ():
                 response = requests.get(
                     f'https://github.com/SteamDatabase/GameTracking-CSGO/commits/master',
                 )
-            except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
+            except (TimeoutError, requests.exceptions.RequestException, urllib3.exceptions.RequestError,
+                    urllib3.exceptions.HTTPError, requests.exceptions.ConnectTimeout,
+                    urllib3.exceptions.MaxRetryError, urllib3.exceptions.ConnectTimeoutError):
                 sleep(10)
                 continue
             break
@@ -28,7 +30,9 @@ def differ():
                 response = requests.get(url)
                 if isinstance(response.text, str) and len(response.text) < 1000:
                     continue
-            except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
+            except (TimeoutError, requests.exceptions.RequestException, urllib3.exceptions.RequestError,
+                    urllib3.exceptions.HTTPError, requests.exceptions.ConnectTimeout,
+                    urllib3.exceptions.MaxRetryError, urllib3.exceptions.ConnectTimeoutError):
                 sleep(5)
                 continue
             break
@@ -42,7 +46,9 @@ def differ():
                 response = requests.get(url_items)
                 if isinstance(response.text, str) and len(response.text) < 1000:
                     continue
-            except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
+            except (TimeoutError, requests.exceptions.RequestException, urllib3.exceptions.RequestError,
+                    urllib3.exceptions.HTTPError, requests.exceptions.ConnectTimeout,
+                    urllib3.exceptions.MaxRetryError, urllib3.exceptions.ConnectTimeoutError):
                 sleep(5)
                 continue
             break
@@ -62,7 +68,9 @@ def differ():
                     if isinstance(response.text, str) and len(response.text) < 1000:
                         print('here')
                         continue
-                except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
+                except (TimeoutError, requests.exceptions.RequestException, urllib3.exceptions.RequestError,
+                        urllib3.exceptions.HTTPError, requests.exceptions.ConnectTimeout,
+                        urllib3.exceptions.MaxRetryError, urllib3.exceptions.ConnectTimeoutError):
                     sleep(2)
                     continue
                 break
@@ -96,7 +104,9 @@ def differ():
                         op.write(response.text)
                     if isinstance(response.text, str) and len(response.text) < 1000:
                         continue
-                except (requests.exceptions.RequestException, urllib3.exceptions.RequestError) as e:
+                except (TimeoutError, requests.exceptions.RequestException, urllib3.exceptions.RequestError,
+                        urllib3.exceptions.HTTPError, requests.exceptions.ConnectTimeout,
+                        urllib3.exceptions.MaxRetryError, urllib3.exceptions.ConnectTimeoutError):
                     sleep(5)
                     continue
                 break
@@ -114,7 +124,9 @@ def differ():
                     response = requests.get(url_items)
                     if isinstance(response.text, str) and len(response.text) < 1000:
                         continue
-                except (requests.exceptions.RequestException, urllib3.exceptions.RequestError, urllib3.exceptions.HTTPError) as e:
+                except (TimeoutError, requests.exceptions.RequestException, urllib3.exceptions.RequestError,
+                        urllib3.exceptions.HTTPError, requests.exceptions.ConnectTimeout,
+                        urllib3.exceptions.MaxRetryError, urllib3.exceptions.ConnectTimeoutError):
                     sleep(5)
                     continue
                 break
@@ -217,9 +229,14 @@ def check_case_update():
 
 
 def check_case_update_blog(page=1):
-    response = requests.get(
-        f'https://blog.counter-strike.net/index.php/category/updates/page/{page}/',
-    )
+    try:
+        response = requests.get(
+            f'https://blog.counter-strike.net/index.php/category/updates/page/{page}/',
+        )
+    except (TimeoutError, requests.exceptions.RequestException, urllib3.exceptions.RequestError,
+            urllib3.exceptions.HTTPError, requests.exceptions.ConnectTimeout,
+            urllib3.exceptions.MaxRetryError, urllib3.exceptions.ConnectTimeoutError):
+        return False
     recent_post = BeautifulSoup(response.text, features='lxml')
     recent_post = recent_post.find("div", "inner_post").getText()
     text = search(r'the .*[A-Z].+Case', recent_post)
