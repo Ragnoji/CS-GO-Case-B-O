@@ -28,7 +28,7 @@ def main():
     game_index = 730
     webdriver = False
     mode = -1  # 0 если нужен бот на нормал скины и 1 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
-    parallel = True  # Регулировка режима запуска воркеров
+    parallel = False  # Регулировка режима запуска воркеров
     require = input(f'Согласны ли вы с таргетами и параметрами:\nwebdriver = {webdriver}\ngame_index = {game_index}\nmode = {mode}\nparallel = {parallel}\n')
     if require != '':
         return
@@ -37,7 +37,8 @@ def main():
     selected_worker = worker if webdriver else worker_direct
     if parallel:
         for i in range(0, len(list_of_items)):
-            threads.append(Thread(target=selected_worker, args=([list_of_items[i]], game_index, mode, i)))
+            threads.append(Thread(target=selected_worker, args=([list_of_items[i]], game_index, mode, i, ),
+                                  kwargs={'use_proxy': False, 'slp': 0.2}))
     else:
         # splited_lists = [[], []]
         # for i, item in enumerate(list_of_items):
@@ -46,7 +47,7 @@ def main():
         #     if s_l:
         #         threads.append(Thread(target=selected_worker, args=(s_l, game_index, mode, i)))
         #         threads[-1].start()
-        threads.append(Thread(target=selected_worker, args=(list_of_items, game_index, mode, 0, 0)))
+        threads.append(Thread(target=selected_worker, args=(list_of_items, game_index, mode, 0, 0.2)))
 
     if mode == 0:
         load_dotenv()
@@ -85,7 +86,7 @@ def main():
                 else:
                     session.proxies.update(no_proxy)
                     proxy_switch = True
-                sleep(2)
+                sleep(3)
                 try:
                     resp = session.get('https://steamcommunity.com/workshop/browse/?appid=252490&browsesort=accepted&section=mtxitems')
                 except requests.ConnectionError:

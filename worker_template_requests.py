@@ -1,3 +1,4 @@
+import json.decoder
 from time import sleep, perf_counter
 import requests
 import requests.adapters
@@ -6,16 +7,15 @@ import os
 from dotenv import load_dotenv
 
 
-def worker(list_of_items, game_index, slp=0.2):
+def worker(list_of_items, game_index, slp=0.2, use_proxy=False):
     load_dotenv()
     steam_r = os.getenv('STEAM_REFRESH_MAIN')
     steam_s = os.getenv('STEAM_SECURE_MAIN')
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
-    proxy = {'https': 'socks5://user58497:nx0yrs@193.160.211.84:11443',
-             'http': 'socks5://user58497:nx0yrs@193.160.211.84:11443'}
-    use_proxy = False
+    proxy = {'https': 'socks5://user58497:nx0yrs@45.152.178.185:16580',
+             'http': 'socks5://user58497:nx0yrs@45.152.178.185:16580'}
     session = requests.session()
     adapter = requests.adapters.HTTPAdapter(max_retries=2)
     session.mount('https://', adapter)
@@ -69,7 +69,12 @@ def worker(list_of_items, game_index, slp=0.2):
             t0 = perf_counter() - t0
             if t0 < 0.5:
                 sleep(0.5 - t0)
-            j = resp.json()
+            try:
+                j = resp.json()
+            except json.decoder.JSONDecodeError:
+                print('A Denied')
+                sleep(1)
+                continue
             if not j:
                 print('COOKIES EXPIRED')
                 break

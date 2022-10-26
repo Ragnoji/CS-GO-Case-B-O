@@ -1,4 +1,5 @@
 import asyncio
+import json.decoder
 from time import sleep, perf_counter
 import requests
 import requests.adapters
@@ -8,22 +9,19 @@ import os
 from dotenv import load_dotenv
 
 
-def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0):
+def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=False):
     load_dotenv()
     steam_r = os.getenv('STEAM_REFRESH_MAIN')
     steam_s = os.getenv('STEAM_SECURE_MAIN')
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
-    proxy = {'https': 'socks5://user58497:nx0yrs@193.160.211.84:11443',
-             'http': 'socks5://user58497:nx0yrs@193.160.211.84:11443'}
-    use_proxy = False
+    proxy = {'https': 'socks5://user58497:nx0yrs@45.152.178.185:16580',
+             'http': 'socks5://user58497:nx0yrs@45.152.178.185:16580'}
     session = requests.session()
     adapter = requests.adapters.HTTPAdapter(max_retries=2)
     session.mount('https://', adapter)
     session.mount('http://', adapter)
-    if use_proxy:
-        session.proxies.update(proxy)
     session.cookies.set(steam_s[:steam_s.find('=')], steam_s[steam_s.find('=') + 1:], domain='steamcommunity.com', path='/')
     session.cookies.set(steam_r[:steam_r.find('=')], steam_r[steam_r.find('=') + 1:], domain='login.steampowered.com', path='/')
     resp = session.get('https://login.steampowered.com/jwt/refresh?redir=https%3A%2F%2Fsteamcommunity.com')
@@ -31,6 +29,7 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0):
         print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
     with open('OUTPUT.html', 'w', encoding='utf-8') as o:
         o.write(resp.text)
+    print(f"{list_of_items}, use_proxy={use_proxy}")
 
     sessionid = [
         {'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path}
@@ -60,9 +59,12 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0):
     elif mode == -1:
         pass
     else:
-        while datetime.now().hour != 2 or datetime.now().minute != 59 or datetime.now().second != 59 or datetime.now().microsecond / 1000000 < 0.95:
+        while datetime.now().hour != 3 or datetime.now().microsecond / 1000000 < 0.05:
             continue
         sleep(0.15 * delay)
+    use_proxy = False if delay % 2 == 0 else False
+    if use_proxy:
+        session.proxies.update(proxy)
 
     i = 0
     time_out = 0.5
@@ -81,7 +83,12 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0):
             t0 = perf_counter() - t0
             if t0 < time_out:
                 sleep(time_out - t0)
-            j = resp.json()
+            try:
+                j = resp.json()
+            except json.decoder.JSONDecodeError:
+                print('A Denied')
+                sleep(1)
+                continue
             if not j:
                 print('COOKIES EXPIRED')
                 break

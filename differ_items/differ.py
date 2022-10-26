@@ -84,8 +84,8 @@ def differ():
             if current_id != old_id:
                 old_id = current_id
                 print(f'\n{datetime.now().strftime("%H:%M:%S")} | {old_id}')
-                print('sleeping 40 seconds')
-                sleep(40)
+                print('sleeping 20 seconds')
+                sleep(20)
                 break
             else:
                 print(f'Nothing new ({current_id})')

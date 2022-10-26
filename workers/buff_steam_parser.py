@@ -59,17 +59,18 @@ def work(min_price=2000, max_price=10000):
 
     options = webdriver.ChromeOptions()
 
-    binary_yandex_driver_file = 'yandexdriver.exe'
+    binary_yandex_driver_file = '..\yandexdriver.exe'
 
     buff_session = webdriver.Chrome(binary_yandex_driver_file, options=options)
+    buff_session.maximize_window()
 
     token = os.getenv('AUTH_TOKEN')
     bot = telebot.TeleBot(token)
     i = 0
     max_i = 100
 
-    resp = buff_session.get(f'https://buff.163.com/market/csgo#tab=selling&page_num=1&min_price={min_price}'
-                            f'&max_price={max_price}&quality=normal&sort_by=price.asc')
+    buff_session.get(f'https://buff.163.com/market/csgo#tab=selling&page_num=1&min_price={min_price}'
+                     f'&max_price={max_price}&quality=normal&sort_by=price.asc&rarity=ancient_weapon')
     buff_session.add_cookie(
         {"name": "session", "value": os.getenv("BUFF_SESSION"), "domain": 'buff.163.com', "path": '/'})
     buff_session.refresh()
@@ -93,7 +94,10 @@ def work(min_price=2000, max_price=10000):
         while not cards:
             cards = buff_session.find_elements_by_xpath('//*[@id="j_list_card"]/ul/li')
             sleep(0.5)
-        max_i = int(buff_session.find_element_by_css_selector("div.pager.card-pager.light-theme.simple-pagination > ul > li:nth-child(12) > a").text)
+        max_i = buff_session.find_elements_by_css_selector("div.pager.card-pager.light-theme.simple-pagination > ul > li:nth-child(12) > a")
+        while not max_i:
+            max_i = buff_session.find_elements_by_css_selector("div.pager.card-pager.light-theme.simple-pagination > ul > li:nth-child(12) > a")
+        max_i = int(max_i[0].text)
         for card in cards:
             name = card.find_element_by_css_selector('h3 > a').get_attribute('title')
             cost_raw = card.find_element_by_css_selector('p > strong').text
@@ -140,11 +144,11 @@ def work(min_price=2000, max_price=10000):
 
             with open('item_page.html', 'w', encoding='utf-8') as o:
                 o.write(item_page.text)
-            if cost / steam_price < 0.7 and i > 3:
+            if cost / steam_price < 0.7 or cost / steam_price > 0.8:
                 soup = BeautifulSoup(item_page.text, 'lxml')
                 item_img = soup.select("div.market_listing_largeimage > img")[0]["src"] + '.png'
                 bot.send_message(852738955, f'<a href="https://steamcommunity.com/market/listings/730/{name}">{name}</a> {cost} руб {steam_price} руб\n'
-                                            f"{cost / steam_price}\n"                                        
+                                            f"{cost / steam_price}\n"
                                             f'<a href="{item_img}"></a>', parse_mode="HTML")
             sleep(4)
             print(name, cost, steam_price, cost/steam_price)

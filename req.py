@@ -56,6 +56,9 @@ def main():
     balance_element = driver.find_element_by_xpath('//*[@id="marketWalletBalanceAmount"]').text
     balance = ''.join(list((filter(lambda s: s.isdigit() or s in [',', '.'], balance_element))))
     balance = int(balance.split(',')[0].split('.')[0])
+    cost = 21  # В рублях
+    quantity = (balance // cost) - 20
+    print(f"Баланс {balance}. Можно поставить {balance // cost} кейсов")
 
     def case_blog(fun=differ.check_case_update_blog):
         global case_re
@@ -84,6 +87,7 @@ def main():
     t2 = Thread(target=case_commits)
     t1.start()
     t2.start()
+    new_box_name = False
     while True:
         sleep(5)
         global case_re
@@ -94,11 +98,13 @@ def main():
             new_box_name = case_re
             Thread(target=loop_alarm).start()
             break
-        if case_fi:
+        if isinstance(case_fi, list):
             new_box_name = case_fi[0]
+            print(new_box_name)
             Thread(target=loop_alarm).start()
             break
         if stickers:
+            print('New stickers without case')
             Thread(target=loop_alarm).start()
             break
         if new_skins:
@@ -106,14 +112,9 @@ def main():
             Thread(target=loop_alarm).start()
 
     driver.refresh()
-    Thread(target=loop_alarm).start()
-    console_command = f'Market_ShowBuyOrderPopup(730, "{new_box_name}", "{new_box_name}")'
-    print(f'NEW CASE RELEASE\nCommand for fast buy:\n{console_command}')
-    cost = 30  # В рублях
-    quantity = (balance // cost) - 30
     if new_box_name and 'Operation' not in new_box_name:  # No sense in placing bo for operation case
         print(f'"{new_box_name}" {cost} {quantity}')
-        case_worker = Thread(target=worker, args=((new_box_name, cost, quantity), 730, 0.1))
+        case_worker = Thread(target=worker, args=([(new_box_name, cost, quantity)], 730, 0.1))
         case_worker.start()
         while case_worker.is_alive():
             print('Trying case')
@@ -206,11 +207,12 @@ def main():
         # Need to adapt prices depending on your choice and currency
         def sticker_map(s):
             if s[1] == 'Covert':
-                covert_s.append((s[0], 65, 30))
-            elif s[1] == 'Classified':
-                class_s.append((s[0], 33, 50))
-            elif s[1] == 'Restricted':
-                restr_s.append((s[0], 7, 200))
+                covert_s.append((s[0], 60, 20))
+                pass
+            # elif s[1] == 'Classified':
+            #     class_s.append((s[0], 10, 50))
+            # elif s[1] == 'Restricted':
+            #     restr_s.append((s[0], 2, 200))
             # elif s[1] == 'Mil-Spec':
             #     milsp_s.append((s[0], 1, 300))
             else:
@@ -220,7 +222,7 @@ def main():
     sticker_workers = []
     if stickers:
         if covert_s:
-            covert_sticker_worker = Thread(target=worker, args=(covert_s, 730, 0.4, True))
+            covert_sticker_worker = Thread(target=worker, args=(covert_s, 730, 0.2))
             sticker_workers.append(covert_sticker_worker)
         # if class_s:
         #     class_sticker_worker = Thread(target=worker, args=(class_s, 730, 0.3))
