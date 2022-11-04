@@ -130,4 +130,4 @@ if __name__ == '__main__':
     name = input('Введи название предмета\n')
     cost = input('Введи цену\n')
     quantity = input('Введи количество\n')
-    worker([[name, cost, quantity]])
+    worker([[name, cost, quantity]], mode=-1)

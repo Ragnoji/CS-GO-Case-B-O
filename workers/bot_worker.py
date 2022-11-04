@@ -11,10 +11,12 @@ import os
 from dotenv import load_dotenv
 
 
-def worker(list_of_items, game_index, mode=0, delay=0, slp=0.5):
+def worker(list_of_items, game_index, mode=0, delay=0, slp=0.2):
     options = webdriver.ChromeOptions()
+    # options.add_argument('--headless')
+    # options.add_argument('--disable-gpu')
 
-    binary_yandex_driver_file = 'yandexdriver.exe'
+    binary_yandex_driver_file = '../yandexdriver.exe'
 
     driver = webdriver.Chrome(binary_yandex_driver_file, options=options)
 

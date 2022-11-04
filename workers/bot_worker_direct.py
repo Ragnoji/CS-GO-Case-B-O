@@ -59,7 +59,7 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
     elif mode == -1:
         pass
     else:
-        while datetime.now().hour != 3 or datetime.now().microsecond / 1000000 < 0.05:
+        while datetime.now().hour != 2 or datetime.now().minute != 59 or datetime.now().second != 59 or datetime.now().microsecond / 1000000 < 0.8:
             continue
         sleep(0.15 * delay)
     use_proxy = False if delay % 2 == 0 else False
@@ -67,7 +67,7 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
         session.proxies.update(proxy)
 
     i = 0
-    time_out = 0.5
+    time_out = 0.45
     while list_of_items:
         if i == len(list_of_items):
             i = 0
@@ -87,12 +87,13 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
                 j = resp.json()
             except json.decoder.JSONDecodeError:
                 print('A Denied')
-                sleep(1)
+                sleep(3)
+                i += 1
                 continue
             if not j:
                 print('COOKIES EXPIRED')
                 break
-            print(j)
+            print(t0, j, item)
             if j['success'] == 8:
                 # for c in session.cookies:
                 #     print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
@@ -127,10 +128,11 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
                         message += f' | {j["buy_orderid"]}\n'
                     logg.write(message)
                 del list_of_items[i]
-                sleep(0.3)
+                # sleep(0.1)
                 continue
             if j['success'] == 40:
-                sleep(0.3)
+                # sleep(0.1)
+                i += 1
                 continue
             sleep(slp)
         except requests.exceptions.Timeout:

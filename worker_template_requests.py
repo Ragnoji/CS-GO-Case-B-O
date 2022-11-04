@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 
 
-def worker(list_of_items, game_index, slp=0.2, use_proxy=False):
+def worker(list_of_items, game_index, slp=0, use_proxy=False):
     load_dotenv()
     steam_r = os.getenv('STEAM_REFRESH_MAIN')
     steam_s = os.getenv('STEAM_SECURE_MAIN')
@@ -26,8 +26,11 @@ def worker(list_of_items, game_index, slp=0.2, use_proxy=False):
     session.cookies.set(steam_s[:steam_s.find('=')], steam_s[steam_s.find('=') + 1:], domain='steamcommunity.com', path='/')
     session.cookies.set(steam_r[:steam_r.find('=')], steam_r[steam_r.find('=') + 1:], domain='login.steampowered.com', path='/')
     resp = session.get('https://login.steampowered.com/jwt/refresh?redir=https%3A%2F%2Fsteamcommunity.com')
+    for c in session.cookies:
+        print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
     with open('OUTPUT.html', 'w', encoding='utf-8') as o:
         o.write(resp.text)
+    print(f"{list_of_items}, use_proxy={use_proxy}")
 
     sessionid = [
         {'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path}
@@ -54,6 +57,7 @@ def worker(list_of_items, game_index, slp=0.2, use_proxy=False):
     }
 
     i = 0
+    time_out = 0.5
     while list_of_items:
         if i == len(list_of_items):
             i = 0
@@ -65,20 +69,21 @@ def worker(list_of_items, game_index, slp=0.2, use_proxy=False):
             if use_proxy:
                 session.proxies.update(proxy)
             t0 = perf_counter()
-            resp = session.post(create_buy_order, data=credentials, timeout=0.6)
+            resp = session.post(create_buy_order, data=credentials, timeout=time_out)
             t0 = perf_counter() - t0
-            if t0 < 0.5:
-                sleep(0.5 - t0)
+            if t0 < time_out:
+                sleep(time_out - t0)
             try:
                 j = resp.json()
             except json.decoder.JSONDecodeError:
                 print('A Denied')
-                sleep(1)
+                sleep(3)
+                i += 1
                 continue
             if not j:
                 print('COOKIES EXPIRED')
                 break
-            print(j)
+            print(item, j)
             if j['success'] == 8:
                 # for c in session.cookies:
                 #     print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
@@ -113,10 +118,10 @@ def worker(list_of_items, game_index, slp=0.2, use_proxy=False):
                         message += f' | {j["buy_orderid"]}\n'
                     logg.write(message)
                 del list_of_items[i]
-                sleep(0.3)
+                sleep(slp)
                 continue
             if j['success'] == 40:
-                sleep(0.3)
+                sleep(slp)
                 continue
             sleep(slp)
         except requests.exceptions.Timeout:

@@ -1,7 +1,7 @@
 from bot_worker import worker
 from bot_worker_direct import worker_direct
 from threading import Thread
-from time import sleep
+from time import sleep, perf_counter
 import os
 from dotenv import load_dotenv
 import requests
@@ -37,8 +37,8 @@ def main():
     selected_worker = worker if webdriver else worker_direct
     if parallel:
         for i in range(0, len(list_of_items)):
-            threads.append(Thread(target=selected_worker, args=([list_of_items[i]], game_index, mode, i, ),
-                                  kwargs={'use_proxy': False, 'slp': 0.2}))
+            threads.append(Thread(target=selected_worker, args=([list_of_items[i]], game_index, mode, i),
+                                  kwargs={'use_proxy': False}))
     else:
         # splited_lists = [[], []]
         # for i, item in enumerate(list_of_items):
@@ -47,7 +47,7 @@ def main():
         #     if s_l:
         #         threads.append(Thread(target=selected_worker, args=(s_l, game_index, mode, i)))
         #         threads[-1].start()
-        threads.append(Thread(target=selected_worker, args=(list_of_items, game_index, mode, 0, 0.2)))
+        threads.append(Thread(target=selected_worker, args=(list_of_items, game_index, mode)))
 
     if mode == 0:
         load_dotenv()

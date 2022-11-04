@@ -208,7 +208,6 @@ def main():
         def sticker_map(s):
             if s[1] == 'Covert':
                 covert_s.append((s[0], 60, 20))
-                pass
             # elif s[1] == 'Classified':
             #     class_s.append((s[0], 10, 50))
             # elif s[1] == 'Restricted':
