@@ -58,13 +58,13 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
         sleep(delay * 0.1)
     elif mode == -1:
         pass
+    elif mode == 1:
+        while datetime.now().hour != 10 or datetime.now().minute != 59 or datetime.now().second < 59 or datetime.now().microsecond / 1000000 < 0.7:
+            continue
     else:
         while datetime.now().hour != 2 or datetime.now().minute != 59 or datetime.now().second != 59 or datetime.now().microsecond / 1000000 < 0.8:
             continue
         sleep(0.15 * delay)
-    use_proxy = False if delay % 2 == 0 else False
-    if use_proxy:
-        session.proxies.update(proxy)
 
     i = 0
     time_out = 0.45
@@ -93,7 +93,7 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
             if not j:
                 print('COOKIES EXPIRED')
                 break
-            print(t0, j, item)
+            # print(t0, j, item)
             if j['success'] == 8:
                 # for c in session.cookies:
                 #     print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})

@@ -3,9 +3,9 @@ from selenium.webdriver.common.keys import Keys
 import vlc
 import requests
 from datetime import datetime
-from threading import Thread
+from threading import Thread, Event
 from differ_items import differ
-from worker_template_requests import worker
+from worker_template_requests import worker, case_worker
 from weapon_parser import new_weapons
 import os
 from dotenv import load_dotenv
@@ -53,12 +53,6 @@ def main():
         driver.refresh()
         sleep(2)
     session.close()
-    balance_element = driver.find_element_by_xpath('//*[@id="marketWalletBalanceAmount"]').text
-    balance = ''.join(list((filter(lambda s: s.isdigit() or s in [',', '.'], balance_element))))
-    balance = int(balance.split(',')[0].split('.')[0])
-    cost = 21  # В рублях
-    quantity = (balance // cost) - 20
-    print(f"Баланс {balance}. Можно поставить {balance // cost} кейсов")
 
     def case_blog(fun=differ.check_case_update_blog):
         global case_re
@@ -88,20 +82,43 @@ def main():
     t1.start()
     t2.start()
     new_box_name = False
+    case_workers = []
+    event = Event()
     while True:
         sleep(5)
         global case_re
         global case_fi
         global stickers
         global new_skins
-        if case_re:
-            new_box_name = case_re
-            Thread(target=loop_alarm).start()
-            break
+        if isinstance(case_re, str):
+            if len(case_workers) == 0:
+                new_box_name = case_re
+                w = Thread(target=case_worker, args=(new_box_name, event))
+                w.start()
+                case_workers.append(w)
+                Thread(target=loop_alarm).start()
+            elif len(case_workers) == 1:
+                break
+            case_re = False
         if isinstance(case_fi, list):
-            new_box_name = case_fi[0]
-            print(new_box_name)
-            Thread(target=loop_alarm).start()
+            if len(case_workers) == 0:
+                new_box_name = case_fi[0]
+                w = Thread(target=case_worker, args=(new_box_name, event))
+                w.start()
+                case_workers.append(w)
+                Thread(target=loop_alarm).start()
+            elif case_fi[0] != new_box_name:
+                event.set()
+                case_workers[-1].join()
+                del case_workers[-1]
+                event = Event()
+                new_box_name = case_fi[0]
+                w = Thread(target=case_worker, args=(new_box_name, event))
+                w.start()
+                case_workers.append(w)
+                Thread(target=loop_alarm).start()
+
+            case_fi = []
             break
         if stickers:
             print('New stickers without case')
@@ -110,13 +127,14 @@ def main():
         if new_skins:
             print('New skins without case')
             Thread(target=loop_alarm).start()
+            break
 
     driver.refresh()
     if new_box_name and 'Operation' not in new_box_name:  # No sense in placing bo for operation case
-        print(f'"{new_box_name}" {cost} {quantity}')
-        case_worker = Thread(target=worker, args=([(new_box_name, cost, quantity)], 730, 0.1))
-        case_worker.start()
-        while case_worker.is_alive():
+        print(new_box_name)
+        w = Thread(target=case_worker, args=new_box_name)
+        w.start()
+        while w.is_alive():
             print('Trying case')
             sleep(5)
 

@@ -84,8 +84,8 @@ def differ():
             if current_id != old_id:
                 old_id = current_id
                 print(f'\n{datetime.now().strftime("%H:%M:%S")} | {old_id}')
-                print('sleeping 20 seconds')
-                sleep(20)
+                print('sleeping 30 seconds')
+                sleep(30)
                 break
             else:
                 print(f'Nothing new ({current_id})')
@@ -225,7 +225,7 @@ def check_case_update():
     box_name = differ()
     if box_name and box_name[0][1] == 'Case' and box_name[0][0] not in past:
         return box_name[0], box_name[1:]
-    return False, box_name
+    return False, [i for i in box_name if i[1] != 'Case']
 
 
 def check_case_update_blog(page=1):

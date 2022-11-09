@@ -27,7 +27,7 @@ def main():
     print(*list_of_items)
     game_index = 730
     webdriver = False
-    mode = -1  # 0 если нужен бот на нормал скины и 1 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
+    mode = 1  # 0 если нужен бот на нормал скины и 1 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
     parallel = False  # Регулировка режима запуска воркеров
     require = input(f'Согласны ли вы с таргетами и параметрами:\nwebdriver = {webdriver}\ngame_index = {game_index}\nmode = {mode}\nparallel = {parallel}\n')
     if require != '':
