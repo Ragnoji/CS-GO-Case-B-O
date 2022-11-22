@@ -202,6 +202,8 @@ def case_worker(case_name, event, slp=0):
     time_out = 0.45
 
     while sessions:
+        if event.is_set():
+            return False
         if i == len(sessions):
             i = 0
         acc = sessions[i]

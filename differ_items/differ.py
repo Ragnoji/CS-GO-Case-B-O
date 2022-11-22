@@ -92,7 +92,7 @@ def differ():
 
         old_lines = old_file.readlines()
         url = f'https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/{current_id}/csgo/resource/csgo_english.txt'
-        for _ in range(20):
+        for _ in range(5):
             print('1 pos')
             current_names = open('current_names.txt', 'w', encoding='utf-8')
             while True:
@@ -181,7 +181,6 @@ def differ():
                         items[items.index(line[li + 2:ri])] = [sticker_map[line[li + 2:ri]], rarities[last_rarity]]
             if items:
                 break
-            sleep(10)
         print('4 pos')
 
         if not items:
@@ -223,7 +222,7 @@ def check_case_update():
             'CS:GO Weapon Case', 'eSports 2013 Winter Case', 'Operation Hydra Case', 'eSports 2013 Case',
             'Operation Bravo Case', 'Recoil Case']
     box_name = differ()
-    if box_name and box_name[0][1] == 'Case' and box_name[0][0] not in past:
+    if box_name and box_name[0][1] == 'Case' and box_name[0][0] not in past and 'Operation' not in box_name[0][0]:
         return box_name[0], box_name[1:]
     return False, [i for i in box_name if i[1] != 'Case']
 
