@@ -26,7 +26,7 @@ def work(min_price=2000, max_price=10000):
         'https': '',
         'http': ''
     }
-    use_proxy = True
+    use_proxy = False
     proxy_switch = False
     steam_session = requests.session()
     adapter = requests.adapters.HTTPAdapter(max_retries=2)
@@ -69,8 +69,7 @@ def work(min_price=2000, max_price=10000):
     i = 0
     max_i = 100
 
-    buff_session.get(f'https://buff.163.com/market/csgo#tab=selling&page_num=1&min_price={min_price}'
-                     f'&max_price={max_price}&quality=normal&sort_by=price.asc&rarity=ancient_weapon')
+    buff_session.get('https://buff.163.com/market/csgo#tab=selling&page_num=1&category_group=knife&min_price=20000&max_price=60000&quality=unusual')
     buff_session.add_cookie(
         {"name": "session", "value": os.getenv("BUFF_SESSION"), "domain": 'buff.163.com', "path": '/'})
     buff_session.refresh()
@@ -81,11 +80,14 @@ def work(min_price=2000, max_price=10000):
     sort_b = buff_session.find_element_by_xpath("/html/body/div[5]/div[1]/div[3]/div[1]/div[3]/h3")
     while not sort_b:
         sort_b = buff_session.find_element_by_xpath("/html/body/div[5]/div[1]/div[3]/div[1]/div[3]/h3")
+
     sort_b.click()
 
     asc_b = buff_session.find_element_by_xpath("/html/body/div[5]/div[1]/div[3]/div[1]/div[3]/ul/li[2]/h6/span")
     while not asc_b:
         asc_b = buff_session.find_element_by_xpath("/html/body/div[5]/div[1]/div[3]/div[1]/div[3]/ul/li[2]/h6/span")
+    while not buff_session.find_elements_by_xpath('//*[@id="j_list_card"]/ul/li'):
+        sleep(1)
     asc_b.click()
 
     while i != max_i:
@@ -100,6 +102,7 @@ def work(min_price=2000, max_price=10000):
         max_i = int(max_i[0].text)
         for card in cards:
             name = card.find_element_by_css_selector('h3 > a').get_attribute('title')
+            href = card.find_element_by_css_selector('h3 > a').get_attribute('href')
             cost_raw = card.find_element_by_css_selector('p > strong').text
             cost = float(cost_raw.strip()[2:])
             if proxy_switch:
@@ -108,23 +111,9 @@ def work(min_price=2000, max_price=10000):
             else:
                 if use_proxy:
                     steam_session.proxies.update(proxy)
-            item_page = steam_session.get(f'https://steamcommunity.com/market/listings/730/{name}')
-            prices = re.findall(r'var g_rgListingInfo = \{.*\}', item_page.text)
+            item_data = ''
 
-            while not prices:
-                sleep(4)
-                if proxy_switch:
-                    steam_session.proxies.update(no_proxy)
-                    proxy_switch = False
-                else:
-                    if use_proxy:
-                        steam_session.proxies.update(proxy)
-                item_page = steam_session.get(f'https://steamcommunity.com/market/listings/730/{name}')
-                prices = re.findall(r'var g_rgListingInfo = \{.*\}', item_page.text)
-            while not prices or ('converted_price' not in list(json.loads(prices[0][22:]).items())[0][1].keys() or
-                                 'converted_fee' not in list(json.loads(prices[0][22:]).items())[0][1].keys()):
-                print('?')
-                sleep(4)
+            while not item_data:
                 while True:
                     try:
                         if proxy_switch:
@@ -133,21 +122,39 @@ def work(min_price=2000, max_price=10000):
                         else:
                             if use_proxy:
                                 steam_session.proxies.update(proxy)
-                        item_page = steam_session.get(f'https://steamcommunity.com/market/listings/730/{name}')
+                        item_data = steam_session.get(
+                            f'https://steamcommunity.com/market/priceoverview/?currency=5&appid=730&market_hash_name={name}').json()
                         break
                     except requests.exceptions.ConnectionError:
                         continue
-                prices = re.findall(r'var g_rgListingInfo = \{.*\}', item_page.text)
+                    except:
+                        continue
+            print(item_data)
+            if 'lowest_price' not in item_data:
+                continue
+            steam_price = float(item_data['lowest_price'].split()[0].replace(',', '.'))
 
-            prices = list(json.loads(prices[0][22:]).items())[0][1]
-            steam_price = (prices['converted_price'] + prices['converted_fee']) / 100
-
-            with open('item_page.html', 'w', encoding='utf-8') as o:
-                o.write(item_page.text)
             if cost / steam_price < 0.7 or cost / steam_price > 0.8:
+                item_page = steam_session.get(f'https://steamcommunity.com/market/listings/730/{name}')
+                while not item_page or 'market_listing_largeimage' not in item_page.text:
+                    while True:
+                        try:
+                            if proxy_switch:
+                                steam_session.proxies.update(no_proxy)
+                                proxy_switch = False
+                            else:
+                                if use_proxy:
+                                    steam_session.proxies.update(proxy)
+                            item_page = steam_session.get(f'https://steamcommunity.com/market/listings/730/{name}')
+                            break
+                        except requests.exceptions.ConnectionError:
+                            continue
+
                 soup = BeautifulSoup(item_page.text, 'lxml')
                 item_img = soup.select("div.market_listing_largeimage > img")[0]["src"] + '.png'
-                bot.send_message(852738955, f'<a href="https://steamcommunity.com/market/listings/730/{name}">{name}</a> {cost} руб {steam_price} руб\n'
+                bot.send_message(852738955, f'<a href="https://steamcommunity.com/market/listings/730/{name}">Steam </a>'
+                                            f'<a href="{href}">Buff.163</a>\n'
+                                            f'{name} {cost} руб {steam_price} руб\n'
                                             f"{cost / steam_price}\n"
                                             f'<a href="{item_img}"></a>', parse_mode="HTML")
             sleep(4)
