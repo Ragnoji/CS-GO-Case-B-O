@@ -237,8 +237,11 @@ def check_case_update_blog(page=1):
             urllib3.exceptions.MaxRetryError, urllib3.exceptions.ConnectTimeoutError):
         return False
     recent_post = BeautifulSoup(response.text, features='lxml')
-    recent_post = recent_post.find("div", "inner_post").getText()
-    text = search(r'the .*[A-Z].+Case', recent_post)
+    recent_post = recent_post.find("div", "inner_post")
+    if recent_post is None:
+        print('Failed to parse blog page')
+        return False
+    text = search(r'the .*[A-Z].+Case', recent_post.getText())
     if not text:
         text = search(r'The .*[A-Z].+Case', recent_post)
     box_name = False
