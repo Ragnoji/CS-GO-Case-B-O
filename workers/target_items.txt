@@ -1,2 +1,1 @@
-"Control Panel Locker" 90 100
-"Minted Gold Garage Door" 90 100
+"Chroma Case" 1 1

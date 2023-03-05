@@ -83,7 +83,7 @@ def main():
 
     t1 = Thread(target=case_blog)
     t2 = Thread(target=case_commits)
-    t1.start()
+    # t1.start()
     t2.start()
     while True:
         sleep(5)
@@ -91,17 +91,17 @@ def main():
         global case_fi
         global stickers
         global new_skins
-        if isinstance(case_re, str):
-            if len(case_workers) == 0:
-                new_box_name = case_re
-                print(f"Регулярка: {new_box_name}")
-                w = Thread(target=case_worker, args=(new_box_name, event))
-                w.start()
-                case_workers.append(w)
-                Thread(target=loop_alarm).start()
-            elif len(case_workers) == 1:
-                break
-            case_re = False
+        # if isinstance(case_re, str):
+        #     if len(case_workers) == 0:
+        #         new_box_name = case_re
+        #         print(f"Регулярка: {new_box_name}")
+        #         w = Thread(target=case_worker, args=(new_box_name, event))
+        #         w.start()
+        #         case_workers.append(w)
+        #         Thread(target=loop_alarm).start()
+        #     elif len(case_workers) == 1:
+        #         break
+        #     case_re = False
         if isinstance(case_fi, list):
             if len(case_workers) == 0:
                 new_box_name = case_fi[0]
@@ -168,6 +168,18 @@ def main():
                         # list_of_extreme_classified.append((item[0] + f' ({exterior})', cost, 6))
                         print(f'"{item[0]} ({exterior})" {cost} 6')
 
+                elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Classified':
+                    for exterior in item[2]:
+                        if exterior == 'Field-Tested':
+                            cost = 255
+                            quan = 20
+                        elif exterior == 'Minimal Wear':
+                            cost = 425
+                            quan = 15
+                        else:
+                            continue
+                        list_of_classified.append((item[0] + f' ({exterior})', cost, quan))
+
                 # elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
                 #     for exterior in item[2]:
                 #         if exterior == 'Factory New':
@@ -183,30 +195,20 @@ def main():
                 #             continue
                 #         list_of_covert.append((item[0] + f' ({exterior})', cost, quan))
 
-                # elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Classified':
-                #     for exterior in item[2]:
-                #         if exterior == 'Factory New':
-                #             cost = 70
-                #             quan = 10
-                #         elif exterior == 'Minimal Wear':
-                #             cost = 70
-                #             quan = 10
-                #         # elif exterior == 'Field-Tested':
-                #         #     cost = 70
-                #         #     quan = 10
-                #         else:
-                #             continue
-                #         list_of_classified.append((item[0] + f' ({exterior})', cost, quan))
     covert_workers = []
     classified_workers = []
     extreme_workers = []
+    normal_workers = []
     if list_of_extreme_covert:
         extreme_workers.append(Thread(target=worker, args=(list_of_extreme_covert, 730, 1)))
         extreme_workers[-1].start()
     if list_of_extreme_classified:
         extreme_workers.append(Thread(target=worker, args=(list_of_extreme_classified, 730, 1)))
         extreme_workers[-1].start()
-    for w in extreme_workers:
+    if list_of_classified:
+        normal_workers.append(Thread(target=worker, args=(list_of_classified, 730)))
+        normal_workers[-1].start()
+    for w in extreme_workers + normal_workers:
         w.join()
 
     # if list_of_covert:

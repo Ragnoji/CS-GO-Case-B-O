@@ -59,7 +59,7 @@ def worker(list_of_items, game_index, slp=0, use_proxy=False):
     }
 
     i = 0
-    time_out = 0.5
+    time_out = 0.55
     while list_of_items:
         if i == len(list_of_items):
             i = 0
@@ -134,7 +134,7 @@ def worker(list_of_items, game_index, slp=0, use_proxy=False):
 
 def case_worker(case_name, event, slp=0):
     game_index = 730
-    cost = 75
+    cost = 100
     load_dotenv()
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 
