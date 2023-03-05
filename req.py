@@ -158,14 +158,14 @@ def main():
             for item in new_skins[collection]:
                 if 'Collection' in collection and item[1] == 'Covert':
                     for exterior in item[2]:
-                        cost = 8000
-                        list_of_extreme_covert.append((item[0] + f' ({exterior})', cost, 3))
+                        cost = 14000
+                        # list_of_extreme_covert.append((item[0] + f' ({exterior})', cost, 2))
                         print(f'"{item[0]} ({exterior})" {cost} 3')
 
                 elif 'Collection' in collection and item[1] == 'Classified':
                     for exterior in item[2]:
                         cost = 3500
-                        # list_of_classified.append((item[0] + f' ({exterior})', cost, 6))
+                        # list_of_extreme_classified.append((item[0] + f' ({exterior})', cost, 6))
                         print(f'"{item[0]} ({exterior})" {cost} 6')
 
                 # elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
@@ -253,9 +253,9 @@ def main():
         #     milsp_sticker_worker = Thread(target=worker, args=(milsp_s, 730, 0.3))
         #     sticker_workers.append(milsp_sticker_worker)
         print('starting sticker_workers')
-        for s_w in sticker_workers:
-            s_w.start()
-            sleep(0.5)
+        # for s_w in sticker_workers:
+        #     s_w.start()
+        #     sleep(0.5)
 
     # if new_box_name:
     #     knives_worker = Thread(target=worker, args=(list_of_knives, 0.5))

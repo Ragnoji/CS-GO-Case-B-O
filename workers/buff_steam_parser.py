@@ -14,7 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import re
 
 
-def work(min_price=2000, max_price=10000):
+def work(min_price=120, max_price=1700):
     load_dotenv()
     steam_r = os.getenv('STEAM_REFRESH_MAIN')
     steam_s = os.getenv('STEAM_SECURE_MAIN')
@@ -69,7 +69,7 @@ def work(min_price=2000, max_price=10000):
     i = 0
     max_i = 100
 
-    buff_session.get('https://buff.163.com/market/csgo#tab=selling&page_num=1&category_group=knife&min_price=20000&max_price=60000&quality=unusual')
+    buff_session.get(f'https://buff.163.com/market/csgo#tab=selling&page_num=1&category_group=knife&min_price={min_price}&max_price={max_price}&quality=unusual')
     buff_session.add_cookie(
         {"name": "session", "value": os.getenv("BUFF_SESSION"), "domain": 'buff.163.com', "path": '/'})
     buff_session.refresh()
@@ -89,6 +89,7 @@ def work(min_price=2000, max_price=10000):
     while not buff_session.find_elements_by_xpath('//*[@id="j_list_card"]/ul/li'):
         sleep(1)
     asc_b.click()
+    input('введи что угодно, когда перейдешь на нужную начальную страницу')
 
     while i != max_i:
         sleep(4)
@@ -96,12 +97,10 @@ def work(min_price=2000, max_price=10000):
         while not cards:
             cards = buff_session.find_elements_by_xpath('//*[@id="j_list_card"]/ul/li')
             sleep(0.5)
-        max_i = buff_session.find_elements_by_css_selector("div.pager.card-pager.light-theme.simple-pagination > ul > li:nth-child(12) > a")
-        while not max_i:
-            max_i = buff_session.find_elements_by_css_selector("div.pager.card-pager.light-theme.simple-pagination > ul > li:nth-child(12) > a")
-        max_i = int(max_i[0].text)
         for card in cards:
             name = card.find_element_by_css_selector('h3 > a').get_attribute('title')
+            if 'Well-Worn' in name:
+                continue
             href = card.find_element_by_css_selector('h3 > a').get_attribute('href')
             cost_raw = card.find_element_by_css_selector('p > strong').text
             cost = float(cost_raw.strip()[2:])
@@ -123,18 +122,17 @@ def work(min_price=2000, max_price=10000):
                             if use_proxy:
                                 steam_session.proxies.update(proxy)
                         item_data = steam_session.get(
-                            f'https://steamcommunity.com/market/priceoverview/?currency=5&appid=730&market_hash_name={name}').json()
+                            f'https://steamcommunity.com/market/priceoverview/?currency=1&appid=730&market_hash_name={name}').json()
                         break
                     except requests.exceptions.ConnectionError:
                         continue
                     except:
                         continue
-            print(item_data)
             if 'lowest_price' not in item_data:
                 continue
-            steam_price = float(item_data['lowest_price'].split()[0].replace(',', '.'))
+            steam_price = float(item_data['lowest_price'][1:])
 
-            if cost / steam_price < 0.7 or cost / steam_price > 0.8:
+            if cost / steam_price < 0.75 or cost / steam_price > 0.9:
                 item_page = steam_session.get(f'https://steamcommunity.com/market/listings/730/{name}')
                 while not item_page or 'market_listing_largeimage' not in item_page.text:
                     while True:
@@ -159,7 +157,8 @@ def work(min_price=2000, max_price=10000):
                                             f'<a href="{item_img}"></a>', parse_mode="HTML")
             sleep(4)
             print(name, cost, steam_price, cost/steam_price)
-        next_page = buff_session.find_element_by_xpath('//*[@id="j_market_card"]/div[2]/ul/li[14]/a').click()
+        pagination_buttons = buff_session.find_elements_by_xpath('//*[@id="j_market_card"]/div[2]/ul/li/a')
+        next_page = pagination_buttons[-1].click()
         i += 1
 
     steam_session.close()

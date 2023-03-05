@@ -134,6 +134,7 @@ def worker(list_of_items, game_index, slp=0, use_proxy=False):
 
 def case_worker(case_name, event, slp=0):
     game_index = 730
+    cost = 75
     load_dotenv()
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 
@@ -159,7 +160,7 @@ def case_worker(case_name, event, slp=0):
         balance = int(float(''.join(filter(lambda s: s.isdigit() or s == '.', parser.find("a", {"id": "header_wallet_balance"}).text[:-5].replace(',', '.')))))
         if balance < 1000:
             continue
-        quantity = (balance - 500) // 26
+        quantity = (balance - 500) // cost
         for c in session.cookies:
             print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
 
@@ -184,7 +185,7 @@ def case_worker(case_name, event, slp=0):
         session.headers.update(headers)
         credentials = {
             'sessionid': sessionid, 'currency': '5', 'appid': game_index, 'market_hash_name': case_name,
-            'price_total': 26 * quantity * 100, 'quantity': quantity, 'billing_state': '', 'save_my_address': '0',
+            'price_total': cost * quantity * 100, 'quantity': quantity, 'billing_state': '', 'save_my_address': '0',
         }
         sessions.append({
             'steam_r': steam_r,
@@ -199,7 +200,7 @@ def case_worker(case_name, event, slp=0):
         })
 
     i = 0
-    time_out = 0.45
+    time_out = 0.55
 
     while sessions:
         if event.is_set():
@@ -216,11 +217,11 @@ def case_worker(case_name, event, slp=0):
             except json.decoder.JSONDecodeError:
                 print('A Denied')
                 sleep(1)
-                i += 1
+                # i += 1
                 continue
             if not j:
                 print('COOKIES EXPIRED')
-                i += 1
+                # i += 1
                 continue
             print(i, j)
             if j['success'] == 8:
@@ -264,4 +265,4 @@ def case_worker(case_name, event, slp=0):
             sleep(slp)
         except requests.exceptions.Timeout:
             pass
-        i += 1
+        # i += 1

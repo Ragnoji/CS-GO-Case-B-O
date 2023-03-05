@@ -241,7 +241,8 @@ def check_case_update_blog(page=1):
     if recent_post is None:
         print('Failed to parse blog page')
         return False
-    text = search(r'the .*[A-Z].+Case', recent_post.getText())
+    recent_post = recent_post.getText()
+    text = search(r'the .*[A-Z].+Case', recent_post)
     if not text:
         text = search(r'The .*[A-Z].+Case', recent_post)
     box_name = False

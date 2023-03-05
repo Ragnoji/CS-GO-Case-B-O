@@ -1,6 +1,7 @@
 from bot_worker import worker
 from bot_worker_direct import worker_direct
 from threading import Thread
+from multiprocessing import Process
 from time import sleep, perf_counter
 import os
 from dotenv import load_dotenv
@@ -25,11 +26,16 @@ def main():
                 list_of_items[i] = [''.join(' '.join(tmp[:g + 1])[1:-1])] + tmp[g + 1:]
                 count_map[list_of_items[i][0]] = 0
     print(*list_of_items)
-    game_index = 730
+    game_index = 252490
     webdriver = False
-    mode = -1  # 0 если нужен бот на нормал скины и 2 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
-    parallel = False  # Регулировка режима запуска воркеров
-    require = input(f'Согласны ли вы с таргетами и параметрами:\nwebdriver = {webdriver}\ngame_index = {game_index}\nmode = {mode}\nparallel = {parallel}\n')
+    mode = 2  # 0 если нужен бот на нормал скины и 2 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
+    acc = 0  # 0 main 1 twink
+    if acc != 0:
+        list_of_items = list_of_items[::-1]
+    use_proxy = False
+    parallel = True  # Регулировка режима запуска воркеров
+    require = input(f'Согласны ли вы с таргетами и параметрами:\nwebdriver = {webdriver}\ngame_index = {game_index}\nmode = {mode}\nparallel = {parallel}\n'
+                    f'acc = {acc}\nuse_proxy = {use_proxy}\n')
     if require != '':
         return
     print('Начинаю работу')
@@ -37,17 +43,18 @@ def main():
     selected_worker = worker if webdriver else worker_direct
     if parallel:
         for i in range(0, len(list_of_items)):
-            threads.append(Thread(target=selected_worker, args=([list_of_items[i]], game_index, mode, i),
-                                  kwargs={'use_proxy': False}))
+            threads.append(Process(target=selected_worker, args=([list_of_items[i]], game_index, mode, i),
+                                   kwargs={'use_proxy': use_proxy, 'acc': acc}))
     else:
         # splited_lists = [[], []]
         # for i, item in enumerate(list_of_items):
         #     splited_lists[i % 2].append(item)
         # for i, s_l in enumerate(splited_lists):
         #     if s_l:
-        #         threads.append(Thread(target=selected_worker, args=(s_l, game_index, mode, i)))
+        #         threads.append(Process(target=selected_worker, args=(s_l, game_index, mode, i)))
         #         threads[-1].start()
-        threads.append(Thread(target=selected_worker, args=(list_of_items, game_index, mode)))
+        threads.append(Process(target=selected_worker, args=(list_of_items, game_index, mode),
+                               kwargs={'use_proxy': use_proxy, 'acc': acc}))
 
     if mode == 0:
         load_dotenv()
@@ -86,7 +93,7 @@ def main():
                 else:
                     session.proxies.update(no_proxy)
                     proxy_switch = True
-                sleep(3)
+                sleep(5)
                 try:
                     resp = session.get('https://steamcommunity.com/workshop/browse/?appid=252490&browsesort=accepted&section=mtxitems')
                 except requests.ConnectionError:

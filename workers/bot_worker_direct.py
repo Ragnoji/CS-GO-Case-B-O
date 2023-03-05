@@ -9,15 +9,18 @@ import os
 from dotenv import load_dotenv
 
 
-def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=False):
+def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=False, acc=0):
     load_dotenv()
     steam_r = os.getenv('STEAM_REFRESH_MAIN')
     steam_s = os.getenv('STEAM_SECURE_MAIN')
+    if acc != 0:
+        steam_r = os.getenv('STEAM_REFRESH_PARSER')
+        steam_s = os.getenv('STEAM_SECURE_PARSER')
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
-    proxy = {'https': 'socks5://user58497:nx0yrs@45.152.178.185:16580',
-             'http': 'socks5://user58497:nx0yrs@45.152.178.185:16580'}
+    proxy = {'https': 'socks5://user58497:nx0yrs@213.139.228.116:6735',
+             'http': 'socks5://user58497:nx0yrs@213.139.228.116:6735'}
     session = requests.session()
     adapter = requests.adapters.HTTPAdapter(max_retries=2)
     session.mount('https://', adapter)
@@ -59,15 +62,15 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
     elif mode == -1:
         pass
     elif mode == 1:
-        while datetime.now().hour != 10 or datetime.now().minute != 59 or datetime.now().second < 59 or datetime.now().microsecond / 1000000 < 0.7:
-            continue
+        while datetime.now().hour != 10 or datetime.now().minute != 59 or datetime.now().second < 59 or datetime.now().microsecond / 1000000 < 0.5:
+            sleep(0.1)
     else:
-        while datetime.now().hour != 2 or datetime.now().minute != 59 or datetime.now().second != 59 or datetime.now().microsecond / 1000000 < 0.8:
-            continue
+        while datetime.now().hour != 2 or datetime.now().minute != 59 or datetime.now().second != 59 or datetime.now().microsecond / 1000000 < 0.7:
+            sleep(0.1)
         sleep(0.15 * delay)
 
     i = 0
-    time_out = 0.45
+    time_out = 0.55
     while list_of_items:
         if i == len(list_of_items):
             i = 0
