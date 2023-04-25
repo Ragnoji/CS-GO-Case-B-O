@@ -132,7 +132,8 @@ def main():
             Thread(target=loop_alarm).start()
             break
 
-    case_workers[-1].join()
+    if case_workers:
+        case_workers[-1].join()
 
     # driver.refresh()
     # if new_box_name and 'Operation' not in new_box_name:  # No sense in placing bo for operation case
@@ -178,7 +179,7 @@ def main():
                             quan = 15
                         else:
                             continue
-                        list_of_classified.append((item[0] + f' ({exterior})', cost, quan))
+                        # list_of_classified.append((item[0] + f' ({exterior})', cost, quan))
 
                 # elif 'Case' in collection and 'Collection' not in collection and item[1] == 'Covert':
                 #     for exterior in item[2]:
@@ -227,37 +228,41 @@ def main():
     if isinstance(stickers, list):
 
         # Need to adapt prices depending on your choice and currency
-        def sticker_map(s):
-            if s[1] == 'Covert':
-                covert_s.append((s[0], 65, 20))
-            elif s[1] == 'Classified':
-                class_s.append((s[0], 10, 100))
-            # elif s[1] == 'Restricted':
-            #     restr_s.append((s[0], 2, 200))
-            # elif s[1] == 'Mil-Spec':
-            #     milsp_s.append((s[0], 1, 300))
+        allowed_stickers = ['breach', 'heroic', '9ine', 'mouz', 'forze', 'faze', 'fnatic', 'vitality']
+
+        def sticker_map(st):
+            if not any([i in st[0].lower() for i in allowed_stickers]):
+                return False
+            # if st[1] == 'Covert':
+            #     covert_s.append((st[0], 65, 20))
+            if st[1] == 'Classified':
+                class_s.append((st[0], 9, 500))
+            # if st[1] == 'Restricted':
+            #     restr_s.append((st[0], 2, 500))
+            # elif st[1] == 'Mil-Spec':
+            #     milsp_s.append((st[0], 1, 300))
             else:
                 return False
         for s in stickers:
             sticker_map(s)
     sticker_workers = []
     if stickers:
-        if covert_s:
-            covert_sticker_worker = Thread(target=worker, args=(covert_s, 730, 0))
-            sticker_workers.append(covert_sticker_worker)
-        # if class_s:
-        #     class_sticker_worker = Thread(target=worker, args=(class_s, 730, 0.3))
-        #     sticker_workers.append(class_sticker_worker)
+        # if covert_s:
+        #     covert_sticker_worker = Thread(target=worker, args=(covert_s, 730, 0))
+        #     sticker_workers.append(covert_sticker_worker)
+        if class_s:
+            class_sticker_worker = Thread(target=worker, args=(class_s, 730, 0))
+            sticker_workers.append(class_sticker_worker)
         # if restr_s:
-        #     restr_sticker_worker = Thread(target=worker, args=(restr_s, 730, 0.2))
+        #     restr_sticker_worker = Thread(target=worker, args=(restr_s, 730, 0))
         #     sticker_workers.append(restr_sticker_worker)
         # if milsp_s:
-        #     milsp_sticker_worker = Thread(target=worker, args=(milsp_s, 730, 0.3))
+        #     milsp_sticker_worker = Thread(target=worker, args=(milsp_s, 730, 0))
         #     sticker_workers.append(milsp_sticker_worker)
         print('starting sticker_workers')
-        # for s_w in sticker_workers:
-        #     s_w.start()
-        #     sleep(0.5)
+        for s_w in sticker_workers:
+            s_w.start()
+            sleep(0.5)
 
     # if new_box_name:
     #     knives_worker = Thread(target=worker, args=(list_of_knives, 0.5))

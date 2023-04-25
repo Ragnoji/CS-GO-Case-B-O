@@ -58,19 +58,19 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
         'price_total': '', 'quantity': '', 'billing_state': '', 'save_my_address': '0',
     }
     if mode == 0:
-        sleep(delay * 0.1)
+        pass
     elif mode == -1:
         pass
     elif mode == 1:
         while datetime.now().hour != 10 or datetime.now().minute != 59 or datetime.now().second < 59 or datetime.now().microsecond / 1000000 < 0.5:
             sleep(0.1)
     else:
-        while datetime.now().hour != 2 or datetime.now().minute != 59 or datetime.now().second != 59 or datetime.now().microsecond / 1000000 < 0.7:
-            sleep(0.1)
+        while datetime.now().hour != 2 or datetime.now().minute != 59 or datetime.now().second != 59 or datetime.now().microsecond / 1000000 < 0.95:
+            sleep(0.01)
         sleep(0.15 * delay)
 
     i = 0
-    time_out = 0.55
+    time_out = 0.5
     while list_of_items:
         if i == len(list_of_items):
             i = 0
@@ -93,6 +93,7 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
                 sleep(3)
                 i += 1
                 continue
+            print(j)
             if not j:
                 print('COOKIES EXPIRED')
                 break

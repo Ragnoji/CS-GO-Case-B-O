@@ -26,12 +26,12 @@ def main():
                 list_of_items[i] = [''.join(' '.join(tmp[:g + 1])[1:-1])] + tmp[g + 1:]
                 count_map[list_of_items[i][0]] = 0
     print(*list_of_items)
-    game_index = 730
+    game_index = 252490
     webdriver = False
     mode = -1  # 0 если нужен бот на нормал скины и 2 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
-    acc = 0  # 0 main 1 twink
-    if acc != 0:
-        list_of_items = list_of_items[::-1]
+    acc = 1  # 0 main 1 twink
+    # if acc != 0:
+    #     list_of_items = list_of_items[::-1]
     use_proxy = False
     parallel = False  # Регулировка режима запуска воркеров
     require = input(f'Согласны ли вы с таргетами и параметрами:\nwebdriver = {webdriver}\ngame_index = {game_index}\nmode = {mode}\nparallel = {parallel}\n'
@@ -102,6 +102,7 @@ def main():
             new = element[0]
             print(new)
         for t in threads:
+            sleep(0.2)
             t.start()
             if selected_worker == worker:
                 sleep(7)
