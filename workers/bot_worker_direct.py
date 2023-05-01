@@ -62,15 +62,15 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
     elif mode == -1:
         pass
     elif mode == 1:
-        while datetime.now().hour != 10 or datetime.now().minute != 59 or datetime.now().second < 59 or datetime.now().microsecond / 1000000 < 0.5:
-            sleep(0.1)
+        while datetime.now().hour != 9 or datetime.now().minute != 59 or datetime.now().second < 59 or datetime.now().microsecond / 1000000 < 0.5:
+            sleep(0.05)
     else:
         while datetime.now().hour != 2 or datetime.now().minute != 59 or datetime.now().second != 59 or datetime.now().microsecond / 1000000 < 0.95:
             sleep(0.01)
         sleep(0.15 * delay)
 
     i = 0
-    time_out = 0.5
+    time_out = 0.4
     while list_of_items:
         if i == len(list_of_items):
             i = 0

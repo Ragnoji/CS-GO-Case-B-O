@@ -26,10 +26,10 @@ def main():
                 list_of_items[i] = [''.join(' '.join(tmp[:g + 1])[1:-1])] + tmp[g + 1:]
                 count_map[list_of_items[i][0]] = 0
     print(*list_of_items)
-    game_index = 252490
+    game_index = 730
     webdriver = False
     mode = -1  # 0 если нужен бот на нормал скины и 2 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
-    acc = 1  # 0 main 1 twink
+    acc = 0  # 0 main 1 twink
     # if acc != 0:
     #     list_of_items = list_of_items[::-1]
     use_proxy = False
