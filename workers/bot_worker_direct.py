@@ -8,14 +8,11 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 
+load_dotenv()
 
-def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=False, acc=0):
-    load_dotenv()
-    steam_r = os.getenv('STEAM_REFRESH_MAIN')
-    steam_s = os.getenv('STEAM_SECURE_MAIN')
-    if acc != 0:
-        steam_r = os.getenv('STEAM_REFRESH_PARSER')
-        steam_s = os.getenv('STEAM_SECURE_PARSER')
+
+def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=False,
+                  steam_r=os.getenv('STEAM_REFRESH_MAIN'), steam_s=os.getenv('STEAM_SECURE_MAIN')):
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'

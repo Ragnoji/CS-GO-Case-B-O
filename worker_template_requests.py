@@ -73,8 +73,8 @@ def worker(list_of_items, game_index, slp=0, use_proxy=False):
             t0 = perf_counter()
             resp = session.post(create_buy_order, data=credentials, timeout=time_out)
             t0 = perf_counter() - t0
-            if t0 < time_out:
-                sleep(time_out - t0)
+            # if t0 < time_out:
+            #     sleep(time_out - t0)
             try:
                 j = resp.json()
             except json.decoder.JSONDecodeError:
@@ -200,7 +200,7 @@ def case_worker(case_name, event, slp=0):
         })
 
     i = 0
-    time_out = 0.55
+    time_out = 0.5
 
     while sessions:
         if event.is_set():

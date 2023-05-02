@@ -44,7 +44,7 @@ def main():
     if parallel:
         for i in range(0, len(list_of_items)):
             threads.append(Process(target=selected_worker, args=([list_of_items[i]], game_index, mode, i),
-                                   kwargs={'use_proxy': use_proxy, 'acc': acc}))
+                                   kwargs={'use_proxy': use_proxy}))
     else:
         # splited_lists = [[], []]
         # for i, item in enumerate(list_of_items):
@@ -53,8 +53,13 @@ def main():
         #     if s_l:
         #         threads.append(Process(target=selected_worker, args=(s_l, game_index, mode, i)))
         #         threads[-1].start()
+        load_dotenv()
         threads.append(Process(target=selected_worker, args=(list_of_items, game_index, mode),
-                               kwargs={'use_proxy': use_proxy, 'acc': acc}))
+                               kwargs={'use_proxy': use_proxy,}))
+        if acc == 1:
+            threads.append(Process(target=selected_worker, args=(list_of_items, game_index, mode),
+                                   kwargs={'use_proxy': use_proxy, 'steam_r': os.getenv('STEAM_REFRESH_PARSER'),
+                                           'steam_s': os.getenv('STEAM_SECURE_PARSER')}))
 
     if mode == 0:
         load_dotenv()
