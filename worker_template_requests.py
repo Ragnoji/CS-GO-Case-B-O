@@ -9,13 +9,35 @@ from accounts_pool import accounts
 from bs4 import BeautifulSoup
 
 
+def ceil_func(x):
+    if '.' not in x or len(x) - x.find('.') < 4:
+        return x
+
+    if x[x.find('.') + 3] != 0:
+        return str(float(x[:x.find('.') + 3]) + 0.01)
+
+    return x[:x.find('.') + 3]
+
+
 def worker(list_of_items, game_index, slp=0, use_proxy=False, time_out=0.55, acc=0):
     load_dotenv()
-    steam_r = os.getenv('STEAM_REFRESH_MAIN')
-    steam_s = os.getenv('STEAM_SECURE_MAIN')
+
+    if acc == 0:
+        currency = '5'
+        steam_r = os.getenv('STEAM_REFRESH_MAIN')
+        steam_s = os.getenv('STEAM_SECURE_MAIN')
     if acc == 1:
+        currency = '5'
         steam_r = os.getenv('STEAM_REFRESH_PARSER')
         steam_s = os.getenv('STEAM_SECURE_PARSER')
+    if acc == 2:
+        currency = '24'
+        steam_r = os.getenv('STEAM_REFRESH_INR1')
+        steam_s = os.getenv('STEAM_SECURE_INR1')
+        conversion_json = requests.get(
+            "https://api.currencyapi.com/v3/latest?apikey=g3sW8AAFzhV4ZfpiSOFyB0eVNLAi6zIdC4S27Zr5&currencies=INR&base_currency=RUB").json()
+        conversion = conversion_json["data"]["INR"]["value"]
+        list_of_items = [[s[0], ceil_func(str(float(s[1]) * conversion)), s[2]] for s in list_of_items]
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
@@ -57,7 +79,7 @@ def worker(list_of_items, game_index, slp=0, use_proxy=False, time_out=0.55, acc
                }
     session.headers.update(headers)
     credentials = {
-        'sessionid': sessionid, 'currency': '5', 'appid': game_index, 'market_hash_name': '',
+        'sessionid': sessionid, 'currency': currency, 'appid': game_index, 'market_hash_name': '',
         'price_total': '', 'quantity': '', 'billing_state': '', 'save_my_address': '0',
     }
 
@@ -148,6 +170,13 @@ def case_worker(case_name, event, slp=0):
             return False
         steam_r = acc[0]
         steam_s = acc[1]
+        currency = acc[2]
+        conversion = 1
+        conversion_json = requests.get(
+            "https://api.currencyapi.com/v3/latest?apikey=g3sW8AAFzhV4ZfpiSOFyB0eVNLAi6zIdC4S27Zr5&currencies=INR&base_currency=RUB").json()
+        if currency == '24':
+            conversion = conversion_json["data"]["INR"]["value"]
+        converted_cost = float(ceil_func(str(cost * conversion)))
 
         session = requests.session()
         adapter = requests.adapters.HTTPAdapter(max_retries=2)
@@ -159,10 +188,13 @@ def case_worker(case_name, event, slp=0):
         with open('OUTPUT.html', 'w', encoding='utf-8') as o:
             o.write(resp.text)
         parser = BeautifulSoup(resp.text, 'html.parser')
-        balance = int(float(''.join(filter(lambda s: s.isdigit() or s == '.', parser.find("a", {"id": "header_wallet_balance"}).text[:-5].replace(',', '.')))))
-        if balance < 1000:
+        if currency == '5':
+            balance = int(float(''.join(filter(lambda s: s.isdigit() or s == '.', parser.find("a", {"id": "header_wallet_balance"}).text[:-5].replace(',', '.')))))
+        if currency == '24':
+            balance = int(float(''.join(filter(lambda s: s.isdigit() or s == '.', parser.find("a", {"id": "header_wallet_balance"}).text.replace(',', '.')))))
+        if balance < float(ceil_func(str(1000 * conversion))):
             continue
-        quantity = (balance - 500) // cost
+        quantity = (balance - float(ceil_func(str(1000 * conversion)))) // converted_cost
         for c in session.cookies:
             print({'name': c.name, 'value': c.value, 'domain': c.domain, 'path': c.path})
 
@@ -186,8 +218,8 @@ def case_worker(case_name, event, slp=0):
                    }
         session.headers.update(headers)
         credentials = {
-            'sessionid': sessionid, 'currency': '5', 'appid': game_index, 'market_hash_name': case_name,
-            'price_total': cost * quantity * 100, 'quantity': quantity, 'billing_state': '', 'save_my_address': '0',
+            'sessionid': sessionid, 'currency': currency, 'appid': game_index, 'market_hash_name': case_name,
+            'price_total': converted_cost * quantity * 100, 'quantity': quantity, 'billing_state': '', 'save_my_address': '0',
         }
         sessions.append({
             'steam_r': steam_r,

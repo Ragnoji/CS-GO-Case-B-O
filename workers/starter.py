@@ -29,7 +29,7 @@ def main():
     game_index = 730
     webdriver = False
     mode = -1  # 0 если нужен бот на нормал скины и 2 если бот на абнормал (-1 если нужно прямо сейчас В СЛУЧАЕ КЕЙСА ИТД)
-    acc = 0  # 0 main 1 twink
+    acc = 0  # 0 main 1 rub twink 2 indian twink
     # if acc != 0:
     #     list_of_items = list_of_items[::-1]
     use_proxy = False
@@ -53,7 +53,6 @@ def main():
         #     if s_l:
         #         threads.append(Process(target=selected_worker, args=(s_l, game_index, mode, i)))
         #         threads[-1].start()
-        load_dotenv()
         threads.append(Process(target=selected_worker, args=(list_of_items, game_index, mode),
                                kwargs={'use_proxy': use_proxy, 'acc': acc, 'slp': 0}))
 

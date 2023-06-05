@@ -11,8 +11,33 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=False,
-                  steam_r=os.getenv('STEAM_REFRESH_MAIN'), steam_s=os.getenv('STEAM_SECURE_MAIN')):
+def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=False, acc=0):
+    load_dotenv()
+
+    def ceil_func(x):
+        if '.' not in x or len(x) - x.find('.') < 4:
+            return x
+
+        if x[x.find('.') + 3] != 0:
+            return str(float(x[:x.find('.') + 3]) + 0.01)
+
+        return x[:x.find('.') + 3]
+
+    if acc == 0:
+        currency = '5'
+        steam_r = os.getenv('STEAM_REFRESH_MAIN')
+        steam_s = os.getenv('STEAM_SECURE_MAIN')
+    if acc == 1:
+        currency = '5'
+        steam_r = os.getenv('STEAM_REFRESH_PARSER')
+        steam_s = os.getenv('STEAM_SECURE_PARSER')
+    if acc == 2:
+        currency = '24'
+        steam_r = os.getenv('STEAM_REFRESH_INR1')
+        steam_s = os.getenv('STEAM_SECURE_INR1')
+        conversion_json = requests.get("https://api.currencyapi.com/v3/latest?apikey=g3sW8AAFzhV4ZfpiSOFyB0eVNLAi6zIdC4S27Zr5&currencies=INR&base_currency=RUB").json()
+        conversion = conversion_json["data"]["INR"]["value"]
+        list_of_items = [[s[0], ceil_func(str(float(s[1]) * conversion)), s[2]] for s in list_of_items]
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
@@ -51,7 +76,7 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
                }
     session.headers.update(headers)
     credentials = {
-        'sessionid': sessionid, 'currency': '5', 'appid': game_index, 'market_hash_name': '',
+        'sessionid': sessionid, 'currency': currency, 'appid': game_index, 'market_hash_name': '',
         'price_total': '', 'quantity': '', 'billing_state': '', 'save_my_address': '0',
     }
     if mode == 0:
@@ -67,7 +92,7 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
         sleep(0.15 * delay)
 
     i = 0
-    time_out = 0.4
+    time_out = 0.5
     while list_of_items:
         if i == len(list_of_items):
             i = 0
