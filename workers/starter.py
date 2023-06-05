@@ -53,6 +53,7 @@ def main():
         #     if s_l:
         #         threads.append(Process(target=selected_worker, args=(s_l, game_index, mode, i)))
         #         threads[-1].start()
+        load_dotenv()
         threads.append(Process(target=selected_worker, args=(list_of_items, game_index, mode),
                                kwargs={'use_proxy': use_proxy, 'acc': acc, 'slp': 0}))
 
