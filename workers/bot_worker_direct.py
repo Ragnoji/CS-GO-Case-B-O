@@ -135,7 +135,7 @@ def worker_direct(list_of_items, game_index, mode=0, delay=0, slp=0, use_proxy=F
                 # sleep(0.1)
                 continue
             if j['success'] == 40:
-                # sleep(0.1)
+                sleep(slp)
                 i += 1
                 continue
             sleep(slp)

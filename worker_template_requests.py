@@ -9,10 +9,13 @@ from accounts_pool import accounts
 from bs4 import BeautifulSoup
 
 
-def worker(list_of_items, game_index, slp=0, use_proxy=False):
+def worker(list_of_items, game_index, slp=0, use_proxy=False, time_out=0.55, acc=0):
     load_dotenv()
     steam_r = os.getenv('STEAM_REFRESH_MAIN')
     steam_s = os.getenv('STEAM_SECURE_MAIN')
+    if acc == 1:
+        steam_r = os.getenv('STEAM_REFRESH_PARSER')
+        steam_s = os.getenv('STEAM_SECURE_PARSER')
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 
     # Строки на входе должны быть вида '"Name Name Name" cost(int) quantity(int)'
@@ -59,7 +62,6 @@ def worker(list_of_items, game_index, slp=0, use_proxy=False):
     }
 
     i = 0
-    time_out = 0.55
     while list_of_items:
         if i == len(list_of_items):
             i = 0
@@ -134,7 +136,7 @@ def worker(list_of_items, game_index, slp=0, use_proxy=False):
 
 def case_worker(case_name, event, slp=0):
     game_index = 730
-    cost = 100
+    cost = 95
     load_dotenv()
     create_buy_order = 'https://steamcommunity.com/market/createbuyorder'
 

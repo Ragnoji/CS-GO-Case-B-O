@@ -174,6 +174,12 @@ def main():
     current_names = open('current_names.txt', 'r', encoding='utf-8').readlines()
     new_skins = new_weapons(current_items, old_items, current_names)
     print(json.dumps(new_skins, sort_keys=False, indent=2))
+    for c in new_skins.items():
+        print(c[0])
+        for w in c[1]:
+            print(w[1])
+            for wear in w[2]:
+                print(f"{w[0]} ({wear})")
 
 
 if __name__ == '__main__':

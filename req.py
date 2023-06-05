@@ -228,17 +228,17 @@ def main():
     if isinstance(stickers, list):
 
         # Need to adapt prices depending on your choice and currency
-        allowed_stickers = ['breach', 'heroic', '9ine', 'mouz', 'forze', 'faze', 'fnatic', 'vitality']
+        allowed_stickers = ['breach', 'heroic', '9ine', 'mouz', 'faze', 'fnatic', 'vitality', 'pain', 'fluxo']
 
         def sticker_map(st):
             if not any([i in st[0].lower() for i in allowed_stickers]):
                 return False
             # if st[1] == 'Covert':
             #     covert_s.append((st[0], 65, 20))
-            if st[1] == 'Classified':
-                class_s.append((st[0], 9, 500))
+            # if st[1] == 'Classified':
+            #     class_s.append((st[0], 10, 200))
             # if st[1] == 'Restricted':
-            #     restr_s.append((st[0], 2, 500))
+            #     restr_s.append((st[0], 2, 1000))
             # elif st[1] == 'Mil-Spec':
             #     milsp_s.append((st[0], 1, 300))
             else:
@@ -250,19 +250,19 @@ def main():
         # if covert_s:
         #     covert_sticker_worker = Thread(target=worker, args=(covert_s, 730, 0))
         #     sticker_workers.append(covert_sticker_worker)
-        if class_s:
-            class_sticker_worker = Thread(target=worker, args=(class_s, 730, 0))
-            sticker_workers.append(class_sticker_worker)
-        # if restr_s:
-        #     restr_sticker_worker = Thread(target=worker, args=(restr_s, 730, 0))
-        #     sticker_workers.append(restr_sticker_worker)
+        # if class_s:
+        #     sticker_workers.append(Thread(target=worker, args=(class_s, 730, 0), kwargs={"time_out": 0.42}))
+        #     sticker_workers.append(Thread(target=worker, args=(class_s, 730, 0), kwargs={"time_out": 0.42, "acc": 1}))
+        if restr_s:
+            sticker_workers.append(Thread(target=worker, args=(restr_s, 730, 0), kwargs={"time_out": 0.45}))
+            sticker_workers.append(Thread(target=worker, args=(restr_s, 730, 0), kwargs={"time_out": 0.45, "acc": 1}))
         # if milsp_s:
         #     milsp_sticker_worker = Thread(target=worker, args=(milsp_s, 730, 0))
         #     sticker_workers.append(milsp_sticker_worker)
         print('starting sticker_workers')
         for s_w in sticker_workers:
             s_w.start()
-            sleep(0.5)
+            sleep(0.3)
 
     # if new_box_name:
     #     knives_worker = Thread(target=worker, args=(list_of_knives, 0.5))

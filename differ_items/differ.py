@@ -220,7 +220,7 @@ def check_case_update():
             'Operation Riptide Case', 'Glove Case', 'Operation Breakout Weapon Case', 'eSports 2014 Summer Case',
             'Huntsman Weapon Case', 'Winter Offensive Weapon Case', 'CS:GO Weapon Case 3', 'CS:GO Weapon Case 2',
             'CS:GO Weapon Case', 'eSports 2013 Winter Case', 'Operation Hydra Case', 'eSports 2013 Case',
-            'Operation Bravo Case', 'Recoil Case']
+            'Operation Bravo Case', 'Recoil Case', 'Revolution Case']
     box_name = differ()
     if box_name and box_name[0][1] == 'Case' and box_name[0][0] not in past and 'Operation' not in box_name[0][0]:
         return box_name[0], box_name[1:]
